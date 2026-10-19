@@ -1,0 +1,37 @@
+{
+  "name": "@npa/api",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "license": "MIT",
+  "scripts": {
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "lint": "eslint --flag unstable_native_nodejs_ts_config",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@npa/auth": "workspace:*",
+    "@npa/db": "workspace:*",
+    "@npa/validators": "workspace:*",
+    "@react-email/components": "^0.5.6",
+    "@trpc/server": "catalog:",
+    "react": "catalog:react19",
+    "resend": "^6.1.2",
+    "superjson": "2.2.3",
+    "uploadthing": "^7.7.0",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@npa/eslint-config": "workspace:*",
+    "@npa/prettier-config": "workspace:*",
+    "@npa/tsconfig": "workspace:*",
+    "@types/react": "catalog:react19",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:"
+  },
+  "prettier": "@npa/prettier-config"
+}
