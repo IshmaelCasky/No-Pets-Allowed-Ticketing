@@ -50,9 +50,15 @@ async function main() {
   }
 
   // The sign-up hook assigns the Customer role by default — promote it.
+  // `role: "admin"` lets this user call the better-auth admin plugin endpoints.
   await db
     .update(user)
-    .set({ roleId: superAdminRole.id, emailVerified: true, banned: false })
+    .set({
+      roleId: superAdminRole.id,
+      role: "admin",
+      emailVerified: true,
+      banned: false,
+    })
     .where(eq(user.email, email));
 
   console.log(

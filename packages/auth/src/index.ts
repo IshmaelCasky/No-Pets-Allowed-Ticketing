@@ -2,6 +2,7 @@ import type { BetterAuthOptions, BetterAuthPlugin } from "better-auth";
 import { expo } from "@better-auth/expo";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { admin } from "better-auth/plugins";
 
 import { eq } from "@npa/db";
 import { db } from "@npa/db/client";
@@ -15,8 +16,6 @@ import { role } from "@npa/db/schema";
 const userAdditionalFields = {
   phone: { type: "string", required: false, input: true },
   roleId: { type: "string", required: false, input: false },
-  banned: { type: "boolean", required: false, input: false },
-  banReason: { type: "string", required: false, input: false },
 } as const;
 
 export function initAuth<
@@ -60,7 +59,11 @@ export function initAuth<
         },
       },
     },
-    plugins: [expo(), ...(options.extraPlugins ?? [])],
+    // `admin` provides server APIs for createUser / setUserPassword / ban, etc.
+    // A user is treated as a plugin-admin when their `role` string is "admin"
+    // (kept in sync with the NPA role). App authorization still uses
+    // permissionProcedure -> role.permissions, not this field.
+    plugins: [expo(), admin(), ...(options.extraPlugins ?? [])],
     trustedOrigins: ["npa://", "expo://"],
     onAPIError: {
       onError(error: unknown, ctx: unknown) {

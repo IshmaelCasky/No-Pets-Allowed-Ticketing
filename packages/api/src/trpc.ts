@@ -51,6 +51,9 @@ export const createTRPCContext = async (opts: {
     db,
     ip,
     userAgent,
+    // Forwarded to better-auth admin-plugin endpoints (createUser,
+    // setUserPassword, …) so they run as the acting admin.
+    headers: opts.headers,
   };
 };
 /**

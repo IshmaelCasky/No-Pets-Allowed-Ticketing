@@ -17,6 +17,12 @@ export const user = pgTable(
     roleId: t.text(),
     banned: t.boolean().notNull().default(false),
     banReason: t.text(),
+    // --- better-auth admin plugin fields ---
+    // `role` ("admin"/"user") gates the plugin's admin endpoints; kept in sync
+    // with the NPA role (non-Customer -> "admin"). Authorization in the app
+    // still uses `roleId` -> role.permissions, never this string.
+    role: t.text().default("user"),
+    banExpires: t.timestamp({ withTimezone: true }),
   }),
   (table) => [
     index("user_role_id_idx").on(table.roleId),
@@ -36,6 +42,8 @@ export const session = pgTable("session", (t) => ({
   updatedAt: t.timestamp().notNull(),
   ipAddress: t.text(),
   userAgent: t.text(),
+  // better-auth admin plugin: set when an admin impersonates a user.
+  impersonatedBy: t.text(),
   userId: t
     .text()
     .notNull()
