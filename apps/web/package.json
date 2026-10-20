@@ -29,6 +29,7 @@
     "@yudiel/react-qr-scanner": "^2.3.1",
     "better-auth": "catalog:",
     "next": "^16.0.9",
+    "qrcode.react": "^4.2.0",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
     "react-hook-form": "^7.54.2",

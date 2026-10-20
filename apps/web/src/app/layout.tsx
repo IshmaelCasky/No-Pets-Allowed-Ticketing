@@ -16,18 +16,16 @@ export const metadata: Metadata = {
       ? "https://turbo.t3.gg"
       : "http://localhost:3000",
   ),
-  title: "Create T3 Turbo",
-  description: "Simple monorepo with shared backend for web & mobile apps",
-  openGraph: {
-    title: "Create T3 Turbo",
-    description: "Simple monorepo with shared backend for web & mobile apps",
-    url: "https://create-t3-turbo.vercel.app",
-    siteName: "Create T3 Turbo",
+  title: {
+    default: "No Pets Allowed — Live music, loud nights",
+    template: "%s",
   },
-  twitter: {
-    card: "summary_large_image",
-    site: "@jullerino",
-    creator: "@jullerino",
+  description:
+    "Tickets for No Pets Allowed concerts. Pay by QR, upload your receipt, get your QR ticket.",
+  openGraph: {
+    title: "No Pets Allowed",
+    description: "Tickets for No Pets Allowed concerts.",
+    siteName: "No Pets Allowed",
   },
 };
 
