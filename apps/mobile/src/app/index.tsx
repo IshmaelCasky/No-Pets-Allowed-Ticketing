@@ -1,41 +1,12 @@
-import { Pressable, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Stack } from "expo-router";
+import { Redirect } from "expo-router";
 
+import { Loading } from "~/components/ui";
 import { authClient } from "~/utils/auth";
 
-// Placeholder home screen. Replaced by the `mobile-app` agent in Phase 2 with
-// the real customer flow (events, checkout, My Tickets) + role-gated scanner.
-function MobileAuth() {
-  const { data: session } = authClient.useSession();
-
-  return (
-    <>
-      <Text className="text-foreground pb-2 text-center text-xl font-semibold">
-        {session?.user.name ? `Hello, ${session.user.name}` : "Not logged in"}
-      </Text>
-      {session ? (
-        <Pressable
-          onPress={() => authClient.signOut()}
-          className="bg-primary flex items-center rounded-sm p-2"
-        >
-          <Text>Sign Out</Text>
-        </Pressable>
-      ) : null}
-    </>
-  );
-}
-
+/** Entry gate: send authed users to the tabbed app, others to sign in. */
 export default function Index() {
-  return (
-    <SafeAreaView className="bg-background">
-      <Stack.Screen options={{ title: "No Pets Allowed" }} />
-      <View className="bg-background h-full w-full p-4">
-        <Text className="text-foreground pb-2 text-center text-5xl font-bold">
-          No Pets <Text className="text-primary">Allowed</Text>
-        </Text>
-        <MobileAuth />
-      </View>
-    </SafeAreaView>
-  );
+  const { data: session, isPending } = authClient.useSession();
+  if (isPending) return <Loading label="Loading…" />;
+  if (session?.user) return <Redirect href="/(tabs)/events" />;
+  return <Redirect href="/(auth)/sign-in" />;
 }

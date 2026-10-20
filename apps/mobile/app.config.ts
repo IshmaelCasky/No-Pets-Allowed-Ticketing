@@ -56,5 +56,21 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         },
       },
     ],
+    [
+      "expo-camera",
+      {
+        cameraPermission:
+          "Allow No Pets Allowed to use the camera to scan tickets at the gate.",
+      },
+    ],
+    [
+      "expo-media-library",
+      {
+        savePhotosPermission:
+          "Allow No Pets Allowed to save the payment QR code to your gallery.",
+        isAccessMediaLocationEnabled: false,
+      },
+    ],
+    "expo-brightness",
   ],
 });
