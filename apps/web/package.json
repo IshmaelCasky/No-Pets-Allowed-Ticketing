@@ -13,6 +13,7 @@
     "with-env": "dotenv -e ../../.env --"
   },
   "dependencies": {
+    "@hookform/resolvers": "^6.0.0",
     "@npa/api": "workspace:*",
     "@npa/auth": "workspace:*",
     "@npa/db": "workspace:*",
@@ -25,10 +26,12 @@
     "@trpc/server": "catalog:",
     "@trpc/tanstack-react-query": "catalog:",
     "@uploadthing/react": "^7.3.0",
+    "@yudiel/react-qr-scanner": "^2.3.1",
     "better-auth": "catalog:",
     "next": "^16.0.9",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
+    "react-hook-form": "^7.54.2",
     "superjson": "2.2.3",
     "uploadthing": "^7.7.0",
     "zod": "catalog:"

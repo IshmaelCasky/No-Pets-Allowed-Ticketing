@@ -4,14 +4,27 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./alert-dialog": "./src/alert-dialog.tsx",
+    "./badge": "./src/badge.tsx",
     "./button": "./src/button.tsx",
+    "./card": "./src/card.tsx",
+    "./checkbox": "./src/checkbox.tsx",
+    "./data-table": "./src/data-table.tsx",
+    "./dialog": "./src/dialog.tsx",
     "./dropdown-menu": "./src/dropdown-menu.tsx",
     "./field": "./src/field.tsx",
     "./input": "./src/input.tsx",
     "./label": "./src/label.tsx",
+    "./select": "./src/select.tsx",
     "./separator": "./src/separator.tsx",
+    "./skeleton": "./src/skeleton.tsx",
+    "./switch": "./src/switch.tsx",
+    "./table": "./src/table.tsx",
+    "./tabs": "./src/tabs.tsx",
+    "./textarea": "./src/textarea.tsx",
     "./theme": "./src/theme.tsx",
-    "./toast": "./src/toast.tsx"
+    "./toast": "./src/toast.tsx",
+    "./tooltip": "./src/tooltip.tsx"
   },
   "license": "MIT",
   "scripts": {
