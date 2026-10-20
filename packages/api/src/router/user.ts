@@ -159,6 +159,28 @@ export const userRouter = {
         if (!targetRole) {
           throw new TRPCError({ code: "BAD_REQUEST", message: "Unknown role" });
         }
+        // The last Super Admin can't be demoted.
+        if (before.roleId && before.roleId !== input.roleId) {
+          const currentRole = await tx.query.role.findFirst({
+            where: eq(role.id, before.roleId),
+            columns: { name: true },
+          });
+          if (
+            currentRole?.name === "Super Admin" &&
+            targetRole.name !== "Super Admin"
+          ) {
+            const [c] = await tx
+              .select({ n: count() })
+              .from(user)
+              .where(eq(user.roleId, before.roleId));
+            if ((c?.n ?? 0) <= 1) {
+              throw new TRPCError({
+                code: "FORBIDDEN",
+                message: "Cannot demote the last Super Admin",
+              });
+            }
+          }
+        }
         const [row] = await tx
           .update(user)
           .set({

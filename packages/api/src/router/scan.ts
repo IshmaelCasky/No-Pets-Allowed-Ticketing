@@ -96,13 +96,23 @@ export const scanRouter = {
           .where(and(eq(ticket.id, found.id), eq(ticket.status, "active")))
           .returning();
         if (!updated) {
-          // Lost the race — re-report as already used.
+          // Lost the race — re-report as already used, with who/when.
           await writeLog("already_used", found.id);
+          const fresh = await tx.query.ticket.findFirst({
+            where: eq(ticket.id, found.id),
+            columns: { usedAt: true, usedById: true },
+          });
+          const usedBy = fresh?.usedById
+            ? await tx.query.user.findFirst({
+                where: eq(user.id, fresh.usedById),
+                columns: { name: true },
+              })
+            : null;
           return {
             result: "already_used",
             ticket: found,
-            usedAt: found.usedAt,
-            usedByName: null,
+            usedAt: fresh?.usedAt ?? found.usedAt,
+            usedByName: usedBy?.name ?? null,
           };
         }
         await writeLog("valid", updated.id);

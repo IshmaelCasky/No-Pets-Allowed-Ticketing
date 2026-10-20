@@ -4,7 +4,7 @@ import { z } from "zod/v4";
 
 import type { db } from "@npa/db/client";
 import type { Order } from "@npa/db/schema";
-import { and, count, desc, eq, inArray, lte, or, sql } from "@npa/db";
+import { and, count, desc, eq, inArray, lte, ne, or, sql } from "@npa/db";
 import {
   event,
   order,
@@ -296,22 +296,53 @@ export const orderRouter = {
           });
         }
 
+        // Duplicate receipt guard — a friendly CONFLICT instead of the raw
+        // unique-violation 500 from the (paymentMethodId, referenceNumber) index.
+        const dup = await tx.query.order.findFirst({
+          where: and(
+            eq(order.paymentMethodId, input.paymentMethodId),
+            eq(order.referenceNumber, input.referenceNumber),
+            ne(order.id, input.orderId),
+          ),
+          columns: { id: true },
+        });
+        if (dup) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message:
+              "This reference number was already submitted for this payment method",
+          });
+        }
+
         const resubmit = existing.status === "rejected";
-        const [row] = await tx
-          .update(order)
-          .set({
-            status: "for_review",
-            paymentMethodId: input.paymentMethodId,
-            referenceNumber: input.referenceNumber,
-            proofImageKey: input.proofImageKey,
-            submittedAt: new Date(),
-            rejectionReason: null,
-            resubmitCount: resubmit
-              ? existing.resubmitCount + 1
-              : existing.resubmitCount,
-          })
-          .where(eq(order.id, input.orderId))
-          .returning();
+        let row;
+        try {
+          [row] = await tx
+            .update(order)
+            .set({
+              status: "for_review",
+              paymentMethodId: input.paymentMethodId,
+              referenceNumber: input.referenceNumber,
+              proofImageKey: input.proofImageKey,
+              submittedAt: new Date(),
+              rejectionReason: null,
+              resubmitCount: resubmit
+                ? existing.resubmitCount + 1
+                : existing.resubmitCount,
+            })
+            .where(eq(order.id, input.orderId))
+            .returning();
+        } catch (e) {
+          // Concurrent submit lost the race against the unique index.
+          if ((e as { code?: string }).code === "23505") {
+            throw new TRPCError({
+              code: "CONFLICT",
+              message:
+                "This reference number was already submitted for this payment method",
+            });
+          }
+          throw e;
+        }
         if (!row) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
         return row;
       });
@@ -463,6 +494,14 @@ export const orderRouter = {
    */
   releaseExpired: publicProcedure.mutation(
     async ({ ctx }): Promise<{ released: number }> => {
+      // Server-to-server only: the Vercel cron route forwards
+      // `Authorization: Bearer $CRON_SECRET`. Reject anything else so this is
+      // not an open abuse surface over /api/trpc.
+      const secret = process.env.CRON_SECRET;
+      if (!secret || ctx.headers.get("authorization") !== `Bearer ${secret}`) {
+        throw new TRPCError({ code: "UNAUTHORIZED" });
+      }
+
       const now = new Date();
       const expired = await ctx.db
         .select({ id: order.id })

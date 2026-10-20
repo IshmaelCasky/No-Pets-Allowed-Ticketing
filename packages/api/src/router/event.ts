@@ -220,7 +220,7 @@ export const eventRouter = {
     .query(async ({ ctx, input }): Promise<string> => {
       const rows = await ctx.db
         .select({
-          ticketCode: ticket.token,
+          // NB: never export ticket.token — it is the sole QR secret.
           holderName: ticket.holderName,
           status: ticket.status,
           seatLabel: seat.label,
@@ -237,17 +237,9 @@ export const eventRouter = {
         )
         .orderBy(asc(order.code));
 
-      const header = [
-        "Order",
-        "Ticket Token",
-        "Holder",
-        "Seat/Tier",
-        "Status",
-        "Used At",
-      ];
+      const header = ["Order", "Holder", "Seat/Tier", "Status", "Used At"];
       const body = rows.map((r) => [
         r.orderCode,
-        r.ticketCode,
         r.holderName ?? "",
         r.seatLabel ?? r.tierName ?? "",
         r.status,
