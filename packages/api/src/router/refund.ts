@@ -1,5 +1,6 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
+import { z } from "zod/v4";
 
 import type { db } from "@npa/db/client";
 import type { RefundRequest } from "@npa/db/schema";
@@ -8,6 +9,7 @@ import {
   event,
   order,
   refundRequest,
+  role,
   seat,
   ticket,
   ticketTier,
@@ -29,6 +31,7 @@ import {
   RefundRejectedEmail,
   sendEmail,
 } from "../emails";
+import { signedProofUrl } from "../lib";
 import { permissionProcedure, protectedProcedure } from "../trpc";
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
@@ -360,6 +363,32 @@ export const refundRouter = {
         });
       }
       return result.row;
+    }),
+
+  /** Short-lived signed URL for the transfer-receipt proof. Owner or refunds:review. */
+  proofUrl: protectedProcedure
+    .input(z.object({ refundRequestId: z.string().min(1) }))
+    .query(async ({ ctx, input }): Promise<{ url: string | null }> => {
+      const row = await ctx.db.query.refundRequest.findFirst({
+        where: eq(refundRequest.id, input.refundRequestId),
+        columns: { userId: true, payoutProofKey: true },
+      });
+      if (!row) throw new TRPCError({ code: "NOT_FOUND" });
+      if (row.userId !== ctx.session.user.id) {
+        const u = ctx.session.user as typeof ctx.session.user & {
+          roleId?: string | null;
+        };
+        const roleRow = u.roleId
+          ? await ctx.db.query.role.findFirst({
+              where: eq(role.id, u.roleId),
+              columns: { permissions: true },
+            })
+          : null;
+        if (!roleRow?.permissions.includes("refunds:review")) {
+          throw new TRPCError({ code: "FORBIDDEN" });
+        }
+      }
+      return { url: await signedProofUrl(row.payoutProofKey) };
     }),
 } satisfies TRPCRouterRecord;
 

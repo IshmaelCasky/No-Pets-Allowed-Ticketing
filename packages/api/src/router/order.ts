@@ -23,7 +23,7 @@ import {
 
 import type { Paginated } from "../stub";
 import { audit } from "../audit";
-import { generateOrderCode } from "../lib";
+import { generateOrderCode, signedProofUrl } from "../lib";
 import {
   permissionProcedure,
   protectedProcedure,
@@ -349,6 +349,32 @@ export const orderRouter = {
         }
       }
       return row;
+    }),
+
+  /** Short-lived signed URL for an order's payment proof. Owner or orders:read. */
+  proofUrl: protectedProcedure
+    .input(z.object({ orderId: z.string().min(1) }))
+    .query(async ({ ctx, input }): Promise<{ url: string | null }> => {
+      const row = await ctx.db.query.order.findFirst({
+        where: eq(order.id, input.orderId),
+        columns: { userId: true, proofImageKey: true },
+      });
+      if (!row) throw new TRPCError({ code: "NOT_FOUND" });
+      if (row.userId !== ctx.session.user.id) {
+        const u = ctx.session.user as typeof ctx.session.user & {
+          roleId?: string | null;
+        };
+        const roleRow = u.roleId
+          ? await ctx.db.query.role.findFirst({
+              where: eq(role.id, u.roleId),
+              columns: { permissions: true },
+            })
+          : null;
+        if (!roleRow?.permissions.includes("orders:read")) {
+          throw new TRPCError({ code: "FORBIDDEN" });
+        }
+      }
+      return { url: await signedProofUrl(row.proofImageKey) };
     }),
 
   /* ----------------------------- admin orders ----------------------------- */
