@@ -34,7 +34,7 @@ import { useListParams } from "~/app/admin/_lib/use-list-params";
 import { formatCentavos, formatManila } from "~/lib/format";
 import { useTRPC } from "~/trpc/react";
 import { EventFilter } from "./event-filter";
-import { isConflict, PAGE_SIZE, uploadThingUrl } from "./lib";
+import { isConflict, PAGE_SIZE } from "./lib";
 
 type QueueItem = RouterOutputs["review"]["queue"]["items"][number];
 
@@ -119,6 +119,16 @@ function ReviewCard({
   const [rejecting, setRejecting] = useState(false);
   const { order, isDuplicateReference } = item;
 
+  // Payment proofs live on a private UploadThing route — fetch a short-lived
+  // signed URL rather than a public CDN path (which would 403).
+  const { data: proof } = useQuery(
+    trpc.order.proofUrl.queryOptions(
+      { orderId: order.id },
+      { enabled: !!order.proofImageKey },
+    ),
+  );
+  const proofUrl = proof?.url ?? null;
+
   const approve = useMutation(
     trpc.review.approve.mutationOptions({
       onSuccess: async () => {
@@ -168,11 +178,15 @@ function ReviewCard({
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4 sm:flex-row">
-        {order.proofImageKey ? (
+        {!order.proofImageKey ? (
+          <div className="bg-muted text-muted-foreground flex h-48 w-48 shrink-0 items-center justify-center rounded-md text-sm">
+            No receipt
+          </div>
+        ) : proofUrl ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={uploadThingUrl(order.proofImageKey)}
+              src={proofUrl}
               alt={`Receipt for ${order.code}`}
               onClick={() => setZoom(true)}
               className="h-48 w-48 shrink-0 cursor-zoom-in rounded-md border object-cover"
@@ -184,7 +198,7 @@ function ReviewCard({
                 </DialogHeader>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={uploadThingUrl(order.proofImageKey)}
+                  src={proofUrl}
                   alt={`Receipt for ${order.code}`}
                   className="max-h-[70vh] w-full object-contain"
                 />
@@ -193,7 +207,7 @@ function ReviewCard({
           </>
         ) : (
           <div className="bg-muted text-muted-foreground flex h-48 w-48 shrink-0 items-center justify-center rounded-md text-sm">
-            No receipt
+            Loading receipt…
           </div>
         )}
 

@@ -12,9 +12,4 @@ export function isConflict(err: ApiError): boolean {
   );
 }
 
-/** UploadThing public CDN URL for a stored file key. */
-export function uploadThingUrl(key: string): string {
-  return `https://utfs.io/f/${key}`;
-}
-
 export const PAGE_SIZE = 20;
