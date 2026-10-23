@@ -10,7 +10,7 @@ import type { RouterInputs, RouterOutputs } from "~/utils/api";
 import { Chips, ListFooter, ListRow, Pill } from "~/components/admin";
 import { Empty, Loading } from "~/components/ui";
 import { trpc, trpcClient } from "~/utils/api";
-import { formatManila } from "~/utils/format";
+import { formatCentavos, formatManila } from "~/utils/format";
 import { usePagedList } from "~/utils/use-paged-list";
 import { useConcertTitles } from "../hooks";
 import { SelectField } from "../select";
@@ -92,9 +92,18 @@ export function RefundsList() {
           }
           renderItem={({ item }) => (
             <ListRow
-              title={item.payoutAccountName}
-              subtitle={item.reason}
-              meta={`${formatManila(item.createdAt)} · ${item.payoutMethod}`}
+              title={item.orderCode ?? "Refund request"}
+              subtitle={[
+                item.totalAmount != null
+                  ? formatCentavos(item.totalAmount)
+                  : null,
+                item.buyerName ?? item.buyerEmail,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+              meta={`${item.eventTitle ?? "Concert"} · ${formatManila(
+                item.createdAt,
+              )}`}
               right={
                 <Pill
                   label={REFUND_STATUS_LABEL[item.status]}
