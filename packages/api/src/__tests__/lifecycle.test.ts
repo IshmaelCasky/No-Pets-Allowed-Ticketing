@@ -233,43 +233,40 @@ describe.runIf(hasTestDb)("router lifecycle + concurrency", () => {
     expect(wrong.result).toBe("wrong_event");
   });
 
-  it("expiry releases held ticket-type inventory via releaseExpired", async () => {
+  it("checkout lazily expires stale holds for the concert (no cron)", async () => {
     await seedBase(env);
-    process.env.CRON_SECRET = "test-cron";
-    const { event, tier } = await createGaEvent(env, 10);
-    const buyerCaller = await callerFor(env, await seedUser(env));
-    const cronCaller = env.createCaller({
-      db: env.db,
-      session: null,
-      authApi: {} as never,
-      ip: null,
-      userAgent: null,
-      headers: new Headers({ authorization: "Bearer test-cron" }),
-    } as never);
+    const { event, tier } = await createGaEvent(env, 3);
+    const a = await callerFor(env, await seedUser(env));
+    const b = await callerFor(env, await seedUser(env));
 
-    const { order } = await buyerCaller.order.create({
+    // Buyer A reserves 2, then abandons (force the window closed).
+    const { order: orderA } = await a.order.create({
       eventId: event.id,
       items: [{ tierId: tier.id, quantity: 2 }],
     });
     await env.db
       .update(env.schema.order)
       .set({ expiresAt: new Date(Date.now() - 1000) })
-      .where(env.eq(env.schema.order.id, order.id));
+      .where(env.eq(env.schema.order.id, orderA.id));
 
-    const res = await cronCaller.order.releaseExpired();
-    expect(res.released).toBe(1);
+    // Buyer B checks out → A's stale hold is released first, so B gets 2 of 3.
+    const { order: orderB } = await b.order.create({
+      eventId: event.id,
+      items: [{ tierId: tier.id, quantity: 2 }],
+    });
 
-    const [freed] = await env.db
+    const [oa] = await env.db
+      .select()
+      .from(env.schema.order)
+      .where(env.eq(env.schema.order.id, orderA.id));
+    expect(oa!.status).toBe("expired");
+
+    const [row] = await env.db
       .select()
       .from(env.schema.ticketTier)
       .where(env.eq(env.schema.ticketTier.id, tier.id));
-    expect(freed!.reserved).toBe(0);
-
-    const [o] = await env.db
-      .select()
-      .from(env.schema.order)
-      .where(env.eq(env.schema.order.id, order.id));
-    expect(o!.status).toBe("expired");
+    expect(row!.reserved).toBe(2); // only B's hold remains
+    void orderB;
   });
 
   it("refund past the cutoff is rejected", async () => {

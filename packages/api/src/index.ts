@@ -19,8 +19,7 @@ type RouterInputs = inferRouterInputs<AppRouter>;
 type RouterOutputs = inferRouterOutputs<AppRouter>;
 
 /**
- * Server-side caller factory. Used by the Vercel cron route (after verifying
- * CRON_SECRET) and by tests to invoke procedures without HTTP.
+ * Server-side caller factory — used by tests to invoke procedures without HTTP.
  */
 const createCaller = createCallerFactory(appRouter);
 

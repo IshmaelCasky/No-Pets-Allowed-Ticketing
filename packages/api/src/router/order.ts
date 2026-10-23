@@ -4,18 +4,7 @@ import { z } from "zod/v4";
 
 import type { db } from "@npa/db/client";
 import type { Order } from "@npa/db/schema";
-import {
-  and,
-  asc,
-  count,
-  desc,
-  eq,
-  ilike,
-  inArray,
-  lte,
-  or,
-  sql,
-} from "@npa/db";
+import { and, asc, count, desc, eq, ilike, lte, or, sql } from "@npa/db";
 import {
   event,
   order,
@@ -41,11 +30,7 @@ import {
   hitpayConfigured,
 } from "../hitpay";
 import { generateOrderCode } from "../lib";
-import {
-  permissionProcedure,
-  protectedProcedure,
-  publicProcedure,
-} from "../trpc";
+import { permissionProcedure, protectedProcedure } from "../trpc";
 
 /** App base URL for HitPay redirect/webhook callbacks. */
 function appBaseUrl(): string {
@@ -86,11 +71,6 @@ export interface AdminOrderDetail extends AdminOrderRow {
 /** 30-minute payment window from order creation. */
 const PAYMENT_WINDOW_MS = 30 * 60 * 1000;
 
-/** Statuses whose held seats/tier inventory are still reserved. */
-function releasableStatuses() {
-  return ["pending_payment"] as const;
-}
-
 export const orderRouter = {
   /**
    * Create an order. Reserves ticket-type inventory in one transaction and sets
@@ -118,6 +98,9 @@ export const orderRouter = {
               message: "Concert is not open for sale",
             });
           }
+
+          // Free up any abandoned holds for this concert before reserving.
+          await expireStaleOrders(tx, ev.id);
 
           const expiresAt = new Date(Date.now() + PAYMENT_WINDOW_MS);
           const code = generateOrderCode();
@@ -470,63 +453,32 @@ export const orderRouter = {
         return row;
       });
     }),
-
-  /**
-   * Release expired, unpaid orders (reserved seats/tier back to available).
-   * Called by the Vercel cron every 5 min via a server-side caller after the
-   * route verifies `CRON_SECRET`.
-   */
-  releaseExpired: publicProcedure.mutation(
-    async ({ ctx }): Promise<{ released: number }> => {
-      // Server-to-server only: the Vercel cron route forwards
-      // `Authorization: Bearer $CRON_SECRET`. Reject anything else so this is
-      // not an open abuse surface over /api/trpc.
-      const secret = process.env.CRON_SECRET;
-      if (!secret || ctx.headers.get("authorization") !== `Bearer ${secret}`) {
-        throw new TRPCError({ code: "UNAUTHORIZED" });
-      }
-
-      const now = new Date();
-      const expired = await ctx.db
-        .select({ id: order.id })
-        .from(order)
-        .where(
-          and(
-            inArray(order.status, [...releasableStatuses()]),
-            sql`${order.expiresAt} is not null`,
-            lte(order.expiresAt, now),
-          ),
-        );
-
-      let released = 0;
-      for (const { id } of expired) {
-        await ctx.db.transaction(async (tx) => {
-          // Re-check status under the row to avoid racing an approval.
-          const [current] = await tx
-            .select()
-            .from(order)
-            .where(eq(order.id, id))
-            .for("update");
-          if (
-            !current ||
-            (current.status !== "pending_payment" &&
-              current.status !== "for_review")
-          ) {
-            return;
-          }
-          if (!current.expiresAt || current.expiresAt > now) return;
-          await releaseInventory(tx, id);
-          await tx
-            .update(order)
-            .set({ status: "expired" })
-            .where(eq(order.id, id));
-          released++;
-        });
-      }
-      return { released };
-    },
-  ),
 } satisfies TRPCRouterRecord;
+
+/**
+ * Expire a concert's unpaid orders whose 30-minute window has passed, releasing
+ * the ticket inventory they hold. Run lazily inside checkout (no cron) so
+ * abandoned holds free up just in time for the next buyer.
+ */
+async function expireStaleOrders(tx: Tx, eventId: string): Promise<void> {
+  const now = new Date();
+  const stale = await tx
+    .select({ id: order.id })
+    .from(order)
+    .where(
+      and(
+        eq(order.eventId, eventId),
+        eq(order.status, "pending_payment"),
+        sql`${order.expiresAt} is not null`,
+        lte(order.expiresAt, now),
+      ),
+    )
+    .for("update");
+  for (const { id } of stale) {
+    await releaseInventory(tx, id);
+    await tx.update(order).set({ status: "expired" }).where(eq(order.id, id));
+  }
+}
 
 /**
  * Release the ticket-type `reserved` inventory held by an order. Call inside

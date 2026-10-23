@@ -19,7 +19,6 @@ export const env = createEnv({
     DATABASE_URL: z.string().url(),
     UPLOADTHING_TOKEN: z.string().min(1),
     RESEND_API_KEY: z.string().min(1),
-    CRON_SECRET: z.string().min(1),
   },
 
   /**

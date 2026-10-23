@@ -61,7 +61,7 @@ Payment is handled by **HitPay** (hosted checkout), not manual proof + staff rev
 
 - Creating an order **reserves** seats immediately, sets `expiresAt` (payment window), and creates a HitPay payment request; the customer is redirected to HitPay's checkout URL.
 - HitPay confirms payment via webhook → `approved`, seats move `reserved` → `sold`, one `ticket` per seat is generated, `paidAt` set, email sent. A `syncPayment` poll reconciles if the webhook is delayed.
-- Window passes with no completed payment → `expired`, reserved seats released (cron every 5 min). Unpaid orders can also be `cancelled` (releases inventory).
+- Window passes with no completed payment → `expired`, held tickets released. There is no cron: stale unpaid orders for a concert are expired lazily at the start of the next checkout for that concert. Unpaid orders can also be `cancelled` (releases inventory).
 
 - Approved order with an approved refund → `refunded` (see Refunds).
 
@@ -208,7 +208,7 @@ Dark, bold concert aesthetic. Sections: nav → hero (next show, CTA) → upcomi
 | Offline scanning | No — scanner is online only |
 | Refunds | In-app requests until `refundCutoffDays` before the event (set per event, default 7); manual payout with transfer receipt as proof |
 | Notifications | Email only (Resend) |
-| Hosting | Vercel (web + cron) + Neon (Postgres) + EAS (mobile builds) |
+| Hosting | Vercel (web) + Neon (Postgres) + EAS (mobile builds) |
 
 Still needed from the client (not blocking the build): No Pets Allowed logo and brand colors, Dribbble reference screenshots in `docs/design/`, launch payment methods and their QR images, Resend sender domain.
 
@@ -254,4 +254,4 @@ Rules for every subagent:
 - All business logic lives in `packages/api`. UI never talks to the DB directly.
 - Dates stored UTC, displayed in `Asia/Manila`.
 - Errors: tRPC `TRPCError` with codes (`FORBIDDEN`, `CONFLICT`, `BAD_REQUEST`); UI shows them via toast.
-- Never commit `.env`. Keep `.env.example` updated: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `UPLOADTHING_TOKEN`, `RESEND_API_KEY`, `CRON_SECRET`.
+- Never commit `.env`. Keep `.env.example` updated: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `UPLOADTHING_TOKEN`, `RESEND_API_KEY`, `HITPAY_API_KEY`, `HITPAY_SALT`, `HITPAY_API_URL`.
