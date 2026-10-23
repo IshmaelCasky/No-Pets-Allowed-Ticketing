@@ -12,6 +12,7 @@ export const createTicketTierSchema = z
     salesStartAt: z.coerce.date().optional(),
     salesEndAt: z.coerce.date().optional(),
     sortOrder: z.number().int().nonnegative().default(0),
+    imageUrl: z.string().url().max(2048).optional(),
   })
   .refine(
     (v) => !v.salesStartAt || !v.salesEndAt || v.salesStartAt <= v.salesEndAt,
@@ -28,5 +29,6 @@ export const updateTicketTierSchema = z.object({
   salesStartAt: z.coerce.date().optional(),
   salesEndAt: z.coerce.date().optional(),
   sortOrder: z.number().int().nonnegative().optional(),
+  imageUrl: z.string().url().max(2048).optional(),
 });
 export type UpdateTicketTierInput = z.infer<typeof updateTicketTierSchema>;
