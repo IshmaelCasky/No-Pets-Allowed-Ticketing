@@ -8,7 +8,6 @@ import {
   pgTable,
   text,
   timestamp,
-  unique,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
@@ -139,7 +138,6 @@ export const event = pgTable(
     posterUrl: t.text(),
     description: t.text(),
     status: eventStatus().notNull().default("draft"),
-    seatingMode: seatingMode().notNull().default("ga"),
     maxPerOrder: t.integer().notNull().default(4),
     refundCutoffDays: t.integer().notNull().default(7),
     createdAt: createdAt(),
@@ -182,65 +180,6 @@ export const ticketTier = pgTable(
       "ticket_tier_capacity_check",
       sql`${table.reserved} + ${table.sold} <= ${table.capacity}`,
     ),
-  ],
-);
-
-/* -------------------------------------------------------------------------- */
-/*  seat_section (reserved events)                                            */
-/* -------------------------------------------------------------------------- */
-
-export const seatSection = pgTable(
-  "seat_section",
-  (t) => ({
-    id: id(),
-    eventId: t
-      .text()
-      .notNull()
-      .references(() => event.id, { onDelete: "cascade" }),
-    name: t.text().notNull(),
-    price: t.integer().notNull(),
-    rows: t.integer().notNull(),
-    seatsPerRow: t.integer().notNull(),
-    rowLabelStyle: rowLabelStyle().notNull().default("alpha"),
-    color: t.text(),
-    sortOrder: t.integer().notNull().default(0),
-    createdAt: createdAt(),
-  }),
-  (table) => [index("seat_section_event_id_idx").on(table.eventId)],
-);
-
-/* -------------------------------------------------------------------------- */
-/*  seat                                                                      */
-/* -------------------------------------------------------------------------- */
-
-export const seat = pgTable(
-  "seat",
-  (t) => ({
-    id: id(),
-    sectionId: t
-      .text()
-      .notNull()
-      .references(() => seatSection.id, { onDelete: "cascade" }),
-    eventId: t
-      .text()
-      .notNull()
-      .references(() => event.id, { onDelete: "cascade" }),
-    rowLabel: t.text().notNull(),
-    number: t.integer().notNull(),
-    label: t.text().notNull(),
-    status: seatStatus().notNull().default("available"),
-    heldByOrderId: t.text(),
-    createdAt: createdAt(),
-  }),
-  (table) => [
-    unique("seat_section_row_number_unique").on(
-      table.sectionId,
-      table.rowLabel,
-      table.number,
-    ),
-    index("seat_section_id_idx").on(table.sectionId),
-    index("seat_event_status_idx").on(table.eventId, table.status),
-    index("seat_held_by_order_id_idx").on(table.heldByOrderId),
   ],
 );
 
@@ -292,8 +231,10 @@ export const orderItem = pgTable(
       .text()
       .notNull()
       .references(() => order.id, { onDelete: "cascade" }),
-    tierId: t.text().references(() => ticketTier.id, { onDelete: "restrict" }),
-    seatId: t.text().references(() => seat.id, { onDelete: "restrict" }),
+    tierId: t
+      .text()
+      .notNull()
+      .references(() => ticketTier.id, { onDelete: "restrict" }),
     quantity: t.integer().notNull(),
     unitPrice: t.integer().notNull(),
     createdAt: createdAt(),
@@ -301,12 +242,6 @@ export const orderItem = pgTable(
   (table) => [
     index("order_item_order_id_idx").on(table.orderId),
     index("order_item_tier_id_idx").on(table.tierId),
-    index("order_item_seat_id_idx").on(table.seatId),
-    // Exactly one of tierId / seatId is set.
-    check(
-      "order_item_tier_xor_seat_check",
-      sql`(${table.tierId} is not null)::int + (${table.seatId} is not null)::int = 1`,
-    ),
   ],
 );
 
@@ -326,8 +261,10 @@ export const ticket = pgTable(
       .text()
       .notNull()
       .references(() => event.id, { onDelete: "restrict" }),
-    tierId: t.text().references(() => ticketTier.id, { onDelete: "restrict" }),
-    seatId: t.text().references(() => seat.id, { onDelete: "restrict" }),
+    tierId: t
+      .text()
+      .notNull()
+      .references(() => ticketTier.id, { onDelete: "restrict" }),
     holderName: t.text(),
     token: t.text().notNull().unique(),
     status: ticketStatus().notNull().default("active"),
@@ -341,15 +278,6 @@ export const ticket = pgTable(
     index("ticket_tier_id_idx").on(table.tierId),
     index("ticket_status_idx").on(table.status),
     index("ticket_used_by_id_idx").on(table.usedById),
-    // A seat can only back one non-void ticket at a time (prevents double-sell).
-    uniqueIndex("ticket_seat_id_active_unique")
-      .on(table.seatId)
-      .where(sql`${table.status} <> 'void' and ${table.seatId} is not null`),
-    // Exactly one of tierId / seatId is set.
-    check(
-      "ticket_tier_xor_seat_check",
-      sql`(${table.tierId} is not null)::int + (${table.seatId} is not null)::int = 1`,
-    ),
   ],
 );
 
@@ -476,8 +404,6 @@ export const roleRelations = relations(role, ({ many }) => ({
 
 export const eventRelations = relations(event, ({ many }) => ({
   ticketTiers: many(ticketTier),
-  seatSections: many(seatSection),
-  seats: many(seat),
   orders: many(order),
   tickets: many(ticket),
   scanLogs: many(scanLog),
@@ -487,31 +413,6 @@ export const ticketTierRelations = relations(ticketTier, ({ one, many }) => ({
   event: one(event, {
     fields: [ticketTier.eventId],
     references: [event.id],
-  }),
-  orderItems: many(orderItem),
-  tickets: many(ticket),
-}));
-
-export const seatSectionRelations = relations(seatSection, ({ one, many }) => ({
-  event: one(event, {
-    fields: [seatSection.eventId],
-    references: [event.id],
-  }),
-  seats: many(seat),
-}));
-
-export const seatRelations = relations(seat, ({ one, many }) => ({
-  section: one(seatSection, {
-    fields: [seat.sectionId],
-    references: [seatSection.id],
-  }),
-  event: one(event, {
-    fields: [seat.eventId],
-    references: [event.id],
-  }),
-  heldByOrder: one(order, {
-    fields: [seat.heldByOrderId],
-    references: [order.id],
   }),
   orderItems: many(orderItem),
   tickets: many(ticket),
@@ -540,10 +441,6 @@ export const orderItemRelations = relations(orderItem, ({ one }) => ({
     fields: [orderItem.tierId],
     references: [ticketTier.id],
   }),
-  seat: one(seat, {
-    fields: [orderItem.seatId],
-    references: [seat.id],
-  }),
 }));
 
 export const ticketRelations = relations(ticket, ({ one }) => ({
@@ -558,10 +455,6 @@ export const ticketRelations = relations(ticket, ({ one }) => ({
   tier: one(ticketTier, {
     fields: [ticket.tierId],
     references: [ticketTier.id],
-  }),
-  seat: one(seat, {
-    fields: [ticket.seatId],
-    references: [seat.id],
   }),
   usedBy: one(user, {
     fields: [ticket.usedById],
@@ -618,10 +511,6 @@ export type Event = typeof event.$inferSelect;
 export type NewEvent = typeof event.$inferInsert;
 export type TicketTier = typeof ticketTier.$inferSelect;
 export type NewTicketTier = typeof ticketTier.$inferInsert;
-export type SeatSection = typeof seatSection.$inferSelect;
-export type NewSeatSection = typeof seatSection.$inferInsert;
-export type Seat = typeof seat.$inferSelect;
-export type NewSeat = typeof seat.$inferInsert;
 export type Order = typeof order.$inferSelect;
 export type NewOrder = typeof order.$inferInsert;
 export type OrderItem = typeof orderItem.$inferSelect;

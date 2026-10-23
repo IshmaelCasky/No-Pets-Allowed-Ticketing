@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 
 import type { Ticket } from "@npa/db/schema";
 import { desc, eq } from "@npa/db";
-import { order, seat, ticket, ticketTier } from "@npa/db/schema";
+import { order, ticket, ticketTier } from "@npa/db/schema";
 import {
   byIdSchema,
   updateTicketHolderSchema,
@@ -22,7 +22,6 @@ export const ticketRouter = {
         orderId: ticket.orderId,
         eventId: ticket.eventId,
         tierId: ticket.tierId,
-        seatId: ticket.seatId,
         holderName: ticket.holderName,
         token: ticket.token,
         status: ticket.status,
@@ -107,24 +106,17 @@ export const ticketRouter = {
           .returning();
         if (!row) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-        // Free the backing inventory.
-        if (before.seatId) {
+        // Free the backing inventory: the ticket type's `sold` count.
+        const [tier] = await tx
+          .select()
+          .from(ticketTier)
+          .where(eq(ticketTier.id, before.tierId))
+          .for("update");
+        if (tier) {
           await tx
-            .update(seat)
-            .set({ status: "available", heldByOrderId: null })
-            .where(eq(seat.id, before.seatId));
-        } else if (before.tierId) {
-          const [tier] = await tx
-            .select()
-            .from(ticketTier)
-            .where(eq(ticketTier.id, before.tierId))
-            .for("update");
-          if (tier) {
-            await tx
-              .update(ticketTier)
-              .set({ sold: Math.max(0, tier.sold - 1) })
-              .where(eq(ticketTier.id, before.tierId));
-          }
+            .update(ticketTier)
+            .set({ sold: Math.max(0, tier.sold - 1) })
+            .where(eq(ticketTier.id, before.tierId));
         }
 
         await audit(

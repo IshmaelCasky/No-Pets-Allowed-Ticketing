@@ -83,7 +83,7 @@ export function OrderExpiredEmail(props: {
       <Text>
         Your order <strong>{props.orderCode}</strong> for{" "}
         <strong>{props.eventTitle}</strong> expired because payment was not
-        completed in time. The held seats have been released.
+        completed in time. The held tickets have been released.
       </Text>
     </EmailLayout>
   );

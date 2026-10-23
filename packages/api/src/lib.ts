@@ -17,28 +17,6 @@ export function generateOrderCode(): string {
   return `NPA-${suffix}`;
 }
 
-/** Row label for a 0-based row index given the section's label style. */
-export function rowLabelFor(index: number, style: "alpha" | "numeric"): string {
-  if (style === "numeric") return String(index + 1);
-  // alpha: A..Z, then AA, AB, ...
-  let n = index;
-  let label = "";
-  do {
-    label = String.fromCharCode(65 + (n % 26)) + label;
-    n = Math.floor(n / 26) - 1;
-  } while (n >= 0);
-  return label;
-}
-
-/** Seat label e.g. `VIP-B12` from section name + row label + seat number. */
-export function seatLabel(
-  sectionName: string,
-  rowLabel: string,
-  number: number,
-): string {
-  return `${sectionName}-${rowLabel}${number}`;
-}
-
 const DEFAULT_PAGE_SIZE = 20;
 
 export function paginationArgs(input: { page?: number; pageSize?: number }): {

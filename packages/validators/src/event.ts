@@ -1,7 +1,7 @@
 import { z } from "zod/v4";
 
 import { idSchema } from "./common";
-import { eventStatusSchema, seatingModeSchema } from "./enums";
+import { eventStatusSchema } from "./enums";
 
 export const slugSchema = z
   .string()
@@ -21,8 +21,6 @@ export const createEventSchema = z
     posterUrl: z.string().url().max(2048).optional(),
     description: z.string().trim().max(10000).optional(),
     status: eventStatusSchema.default("draft"),
-    // Seating mode can't change once any order exists (enforced in the API).
-    seatingMode: seatingModeSchema,
     maxPerOrder: z.number().int().positive().max(50).default(4),
     refundCutoffDays: z.number().int().nonnegative().max(365).default(7),
   })
@@ -32,7 +30,7 @@ export const createEventSchema = z
   });
 export type CreateEventInput = z.infer<typeof createEventSchema>;
 
-/** Update: id + any subset of the editable fields (seatingMode handled carefully in API). */
+/** Update: id + any subset of the editable fields. */
 export const updateEventSchema = z.object({
   id: idSchema,
   title: z.string().trim().min(1).max(200).optional(),
@@ -44,7 +42,6 @@ export const updateEventSchema = z.object({
   posterUrl: z.string().url().max(2048).optional(),
   description: z.string().trim().max(10000).optional(),
   status: eventStatusSchema.optional(),
-  seatingMode: seatingModeSchema.optional(),
   maxPerOrder: z.number().int().positive().max(50).optional(),
   refundCutoffDays: z.number().int().nonnegative().max(365).optional(),
 });

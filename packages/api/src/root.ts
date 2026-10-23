@@ -6,7 +6,6 @@ import { orderRouter } from "./router/order";
 import { refundRouter } from "./router/refund";
 import { roleRouter } from "./router/role";
 import { scanRouter } from "./router/scan";
-import { seatMapRouter } from "./router/seat-map";
 import { setupRouter } from "./router/setup";
 import { ticketRouter } from "./router/ticket";
 import { userRouter } from "./router/user";
@@ -16,7 +15,6 @@ export const appRouter = createTRPCRouter({
   auth: authRouter,
   setup: setupRouter,
   event: eventRouter,
-  seatMap: seatMapRouter,
   order: orderRouter,
   refund: refundRouter,
   ticket: ticketRouter,

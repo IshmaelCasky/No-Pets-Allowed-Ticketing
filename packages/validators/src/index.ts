@@ -3,7 +3,6 @@ export * from "./common";
 export * from "./auth";
 export * from "./event";
 export * from "./tier";
-export * from "./seat";
 export * from "./order";
 export * from "./refund";
 export * from "./ticket";

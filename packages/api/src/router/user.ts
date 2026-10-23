@@ -82,7 +82,6 @@ export const userRouter = {
               orderId: ticket.orderId,
               eventId: ticket.eventId,
               tierId: ticket.tierId,
-              seatId: ticket.seatId,
               holderName: ticket.holderName,
               token: ticket.token,
               status: ticket.status,

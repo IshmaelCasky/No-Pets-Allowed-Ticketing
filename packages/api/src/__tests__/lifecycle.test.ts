@@ -71,63 +71,18 @@ async function createGaEvent(env: TestEnv, capacity: number, price = 50000) {
   const [ev] = await env.db
     .insert(env.schema.event)
     .values({
-      slug: `ga-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      title: "GA Show",
+      slug: `c-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      title: "Concert",
       status: "published",
-      seatingMode: "ga",
       maxPerOrder: 4,
       startsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     })
     .returning();
   const [tier] = await env.db
     .insert(env.schema.ticketTier)
-    .values({ eventId: ev!.id, name: "GA", price, capacity, sortOrder: 0 })
+    .values({ eventId: ev!.id, name: "General", price, capacity, sortOrder: 0 })
     .returning();
   return { event: ev!, tier: tier! };
-}
-
-async function createReservedEvent(env: TestEnv) {
-  const [ev] = await env.db
-    .insert(env.schema.event)
-    .values({
-      slug: `rs-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      title: "Reserved Show",
-      status: "published",
-      seatingMode: "reserved",
-      maxPerOrder: 4,
-      startsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-    })
-    .returning();
-  const [section] = await env.db
-    .insert(env.schema.seatSection)
-    .values({
-      eventId: ev!.id,
-      name: "VIP",
-      price: 100000,
-      rows: 2,
-      seatsPerRow: 2,
-      rowLabelStyle: "alpha",
-      sortOrder: 0,
-    })
-    .returning();
-  const seats = [];
-  for (let r = 0; r < 2; r++) {
-    const rowLabel = String.fromCharCode(65 + r);
-    for (let n = 1; n <= 2; n++) {
-      seats.push({
-        sectionId: section!.id,
-        eventId: ev!.id,
-        rowLabel,
-        number: n,
-        label: `VIP-${rowLabel}${n}`,
-      });
-    }
-  }
-  const inserted = await env.db
-    .insert(env.schema.seat)
-    .values(seats)
-    .returning();
-  return { event: ev!, section: section!, seats: inserted };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -156,7 +111,6 @@ describe.runIf(hasTestDb)("router lifecycle + concurrency", () => {
 
     const order = (qty: number) =>
       caller.order.create({
-        mode: "ga",
         eventId: event.id,
         items: [{ tierId: tier.id, quantity: qty }],
       });
@@ -177,38 +131,12 @@ describe.runIf(hasTestDb)("router lifecycle + concurrency", () => {
     expect(row!.reserved + row!.sold).toBeLessThanOrEqual(row!.capacity);
   });
 
-  it("Reserved: two orders can't hold the same seat", async () => {
-    await seedBase(env);
-    const { event, seats } = await createReservedEvent(env);
-    const a = await callerFor(env, await seedUser(env));
-    const b = await callerFor(env, await seedUser(env));
-    const seatId = seats[0]!.id;
-
-    const results = await Promise.allSettled([
-      a.order.create({
-        mode: "reserved",
-        eventId: event.id,
-        seatIds: [seatId],
-      }),
-      b.order.create({
-        mode: "reserved",
-        eventId: event.id,
-        seatIds: [seatId],
-      }),
-    ]);
-    const ok = results.filter((r) => r.status === "fulfilled").length;
-    expect(ok).toBe(1);
-    const conflict = results.find((r) => r.status === "rejected");
-    expect(conflict!.reason).toBeInstanceOf(TRPCError);
-  });
-
   it("payment fulfilment generates tickets + marks inventory sold, and is idempotent", async () => {
     await seedBase(env);
     const { event, tier } = await createGaEvent(env, 10);
     const buyerCaller = await callerFor(env, await seedUser(env));
 
     const { order } = await buyerCaller.order.create({
-      mode: "ga",
       eventId: event.id,
       items: [{ tierId: tier.id, quantity: 2 }],
     });
@@ -244,7 +172,6 @@ describe.runIf(hasTestDb)("router lifecycle + concurrency", () => {
     const staffCaller = await callerFor(env, f.staffId);
 
     const { order } = await buyerCaller.order.create({
-      mode: "ga",
       eventId: event.id,
       items: [{ tierId: tier.id, quantity: 1 }],
     });
@@ -290,7 +217,6 @@ describe.runIf(hasTestDb)("router lifecycle + concurrency", () => {
 
     const buyerCaller = await callerFor(env, await seedUser(env));
     const { order: o } = await buyerCaller.order.create({
-      mode: "ga",
       eventId: other.event.id,
       items: [{ tierId: other.tier.id, quantity: 1 }],
     });
@@ -307,10 +233,10 @@ describe.runIf(hasTestDb)("router lifecycle + concurrency", () => {
     expect(wrong.result).toBe("wrong_event");
   });
 
-  it("expiry releases held seats via releaseExpired", async () => {
+  it("expiry releases held ticket-type inventory via releaseExpired", async () => {
     await seedBase(env);
     process.env.CRON_SECRET = "test-cron";
-    const { event, seats } = await createReservedEvent(env);
+    const { event, tier } = await createGaEvent(env, 10);
     const buyerCaller = await callerFor(env, await seedUser(env));
     const cronCaller = env.createCaller({
       db: env.db,
@@ -322,9 +248,8 @@ describe.runIf(hasTestDb)("router lifecycle + concurrency", () => {
     } as never);
 
     const { order } = await buyerCaller.order.create({
-      mode: "reserved",
       eventId: event.id,
-      seatIds: [seats[0]!.id, seats[1]!.id],
+      items: [{ tierId: tier.id, quantity: 2 }],
     });
     await env.db
       .update(env.schema.order)
@@ -334,11 +259,11 @@ describe.runIf(hasTestDb)("router lifecycle + concurrency", () => {
     const res = await cronCaller.order.releaseExpired();
     expect(res.released).toBe(1);
 
-    const freed = await env.db
+    const [freed] = await env.db
       .select()
-      .from(env.schema.seat)
-      .where(env.eq(env.schema.seat.eventId, event.id));
-    expect(freed.every((s) => s.status === "available")).toBe(true);
+      .from(env.schema.ticketTier)
+      .where(env.eq(env.schema.ticketTier.id, tier.id));
+    expect(freed!.reserved).toBe(0);
 
     const [o] = await env.db
       .select()
@@ -361,7 +286,6 @@ describe.runIf(hasTestDb)("router lifecycle + concurrency", () => {
       .where(env.eq(env.schema.event.id, event.id));
 
     const { order } = await buyerCaller.order.create({
-      mode: "ga",
       eventId: event.id,
       items: [{ tierId: tier.id, quantity: 1 }],
     });
@@ -380,14 +304,13 @@ describe.runIf(hasTestDb)("router lifecycle + concurrency", () => {
 
   it("refund approve voids tickets and frees inventory; markPaid refunds the order", async () => {
     const f = await seedBase(env);
-    const { event, seats } = await createReservedEvent(env);
+    const { event, tier } = await createGaEvent(env, 10);
     const buyerCaller = await callerFor(env, await seedUser(env));
     const staffCaller = await callerFor(env, f.staffId);
 
     const { order } = await buyerCaller.order.create({
-      mode: "reserved",
       eventId: event.id,
-      seatIds: [seats[0]!.id],
+      items: [{ tierId: tier.id, quantity: 1 }],
     });
     await payOrder(env, order.id);
 
@@ -401,11 +324,11 @@ describe.runIf(hasTestDb)("router lifecycle + concurrency", () => {
 
     await staffCaller.refund.approve({ refundRequestId: req.id });
 
-    const [seat0] = await env.db
+    const [freed] = await env.db
       .select()
-      .from(env.schema.seat)
-      .where(env.eq(env.schema.seat.id, seats[0]!.id));
-    expect(seat0!.status).toBe("available");
+      .from(env.schema.ticketTier)
+      .where(env.eq(env.schema.ticketTier.id, tier.id));
+    expect(freed!.sold).toBe(0);
 
     const tickets = await env.db
       .select()

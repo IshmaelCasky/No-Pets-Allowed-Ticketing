@@ -63,7 +63,7 @@ export async function resetDb(env: TestEnv): Promise<void> {
   await env.db.execute(env.sql`
     truncate table
       "scan_log", "audit_log", "ticket", "order_item", "refund_request",
-      "order", "seat", "seat_section", "ticket_tier",
+      "order", "ticket_tier",
       "event", "session", "account", "user", "role"
     restart identity cascade
   `);

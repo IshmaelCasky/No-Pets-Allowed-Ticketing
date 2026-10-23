@@ -10,7 +10,6 @@ import {
   order,
   refundRequest,
   role,
-  seat,
   ticket,
   ticketTier,
   user,
@@ -421,7 +420,7 @@ async function loadNotify(
 
 /**
  * On refund approval: void the order's active tickets and return their
- * inventory — sold seats → available, GA tier `sold` decremented.
+ * inventory — the ticket type's `sold` is decremented per voided ticket.
  */
 async function voidTicketsAndFreeInventory(
   tx: Tx,
@@ -435,23 +434,16 @@ async function voidTicketsAndFreeInventory(
   for (const t of tickets) {
     await tx.update(ticket).set({ status: "void" }).where(eq(ticket.id, t.id));
 
-    if (t.seatId) {
+    const [tier] = await tx
+      .select()
+      .from(ticketTier)
+      .where(eq(ticketTier.id, t.tierId))
+      .for("update");
+    if (tier) {
       await tx
-        .update(seat)
-        .set({ status: "available", heldByOrderId: null })
-        .where(eq(seat.id, t.seatId));
-    } else if (t.tierId) {
-      const [tier] = await tx
-        .select()
-        .from(ticketTier)
-        .where(eq(ticketTier.id, t.tierId))
-        .for("update");
-      if (tier) {
-        await tx
-          .update(ticketTier)
-          .set({ sold: Math.max(0, tier.sold - 1) })
-          .where(eq(ticketTier.id, t.tierId));
-      }
+        .update(ticketTier)
+        .set({ sold: Math.max(0, tier.sold - 1) })
+        .where(eq(ticketTier.id, t.tierId));
     }
   }
 }

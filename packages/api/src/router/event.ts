@@ -5,7 +5,7 @@ import { z } from "zod/v4";
 import type { db } from "@npa/db/client";
 import type { Event, TicketTier } from "@npa/db/schema";
 import { and, asc, count, desc, eq, ilike, or, sql } from "@npa/db";
-import { event, order, seat, ticket, ticketTier } from "@npa/db/schema";
+import { event, order, ticket, ticketTier } from "@npa/db/schema";
 import {
   byIdSchema,
   createEventSchema,
@@ -125,17 +125,6 @@ export const eventRouter = {
         });
         if (!before) throw new TRPCError({ code: "NOT_FOUND" });
 
-        if (
-          patch.seatingMode &&
-          patch.seatingMode !== before.seatingMode &&
-          (await eventHasOrders(tx, id))
-        ) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Seating mode can't change once an order exists",
-          });
-        }
-
         const [row] = await tx
           .update(event)
           .set(patch)
@@ -223,13 +212,11 @@ export const eventRouter = {
           // NB: never export ticket.token — it is the sole QR secret.
           holderName: ticket.holderName,
           status: ticket.status,
-          seatLabel: seat.label,
           tierName: ticketTier.name,
           orderCode: order.code,
           usedAt: ticket.usedAt,
         })
         .from(ticket)
-        .leftJoin(seat, eq(ticket.seatId, seat.id))
         .leftJoin(ticketTier, eq(ticket.tierId, ticketTier.id))
         .innerJoin(order, eq(ticket.orderId, order.id))
         .where(
@@ -237,18 +224,18 @@ export const eventRouter = {
         )
         .orderBy(asc(order.code));
 
-      const header = ["Order", "Holder", "Seat/Tier", "Status", "Used At"];
+      const header = ["Order", "Holder", "Ticket type", "Status", "Used At"];
       const body = rows.map((r) => [
         r.orderCode,
         r.holderName ?? "",
-        r.seatLabel ?? r.tierName ?? "",
+        r.tierName ?? "",
         r.status,
         r.usedAt ? r.usedAt.toISOString() : "",
       ]);
       return toCsv([header, ...body]);
     }),
 
-  /* ----------------------------- GA ticket tiers -------------------------- */
+  /* ------------------------------ ticket types ---------------------------- */
   tiersByEvent: publicProcedure
     .input(z.object({ eventId: idSchema }))
     .query(async ({ ctx, input }): Promise<TicketTier[]> => {

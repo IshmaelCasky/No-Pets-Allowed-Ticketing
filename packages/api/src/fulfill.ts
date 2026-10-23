@@ -7,7 +7,6 @@ import {
   event,
   order,
   orderItem,
-  seat,
   ticket,
   ticketTier,
   user,
@@ -81,50 +80,29 @@ export async function fulfillPaidOrderTx(
     .where(eq(orderItem.orderId, row.id));
 
   for (const item of items) {
-    if (item.seatId) {
-      const [seatRow] = await tx
-        .update(seat)
-        .set({ status: "sold" })
-        .where(and(eq(seat.id, item.seatId), eq(seat.status, "held")))
-        .returning();
-      if (!seatRow) {
-        throw new TRPCError({
-          code: "CONFLICT",
-          message: "A seat is no longer held for this order",
-        });
-      }
+    // ticket-type `reserved` → `sold`, one ticket per quantity.
+    const [tier] = await tx
+      .select()
+      .from(ticketTier)
+      .where(eq(ticketTier.id, item.tierId))
+      .for("update");
+    if (!tier) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    await tx
+      .update(ticketTier)
+      .set({
+        reserved: Math.max(0, tier.reserved - item.quantity),
+        sold: tier.sold + item.quantity,
+      })
+      .where(eq(ticketTier.id, item.tierId));
+    for (let i = 0; i < item.quantity; i++) {
       await tx.insert(ticket).values({
         orderId: row.id,
         eventId: row.eventId,
-        seatId: item.seatId,
+        tierId: item.tierId,
         holderName: buyer?.name ?? null,
         token: generateTicketToken(),
         status: "active",
       });
-    } else if (item.tierId) {
-      const [tier] = await tx
-        .select()
-        .from(ticketTier)
-        .where(eq(ticketTier.id, item.tierId))
-        .for("update");
-      if (!tier) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await tx
-        .update(ticketTier)
-        .set({
-          reserved: Math.max(0, tier.reserved - item.quantity),
-          sold: tier.sold + item.quantity,
-        })
-        .where(eq(ticketTier.id, item.tierId));
-      for (let i = 0; i < item.quantity; i++) {
-        await tx.insert(ticket).values({
-          orderId: row.id,
-          eventId: row.eventId,
-          tierId: item.tierId,
-          holderName: buyer?.name ?? null,
-          token: generateTicketToken(),
-          status: "active",
-        });
-      }
     }
   }
 
