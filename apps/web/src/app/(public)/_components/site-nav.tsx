@@ -26,12 +26,12 @@ export function SiteNav() {
       <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-6 px-5">
         <Link href="/" className="flex items-center">
           <Image
-            src="/logo.jpg"
+            src="/logo.png"
             alt="Bisaya Beats · No Pets Allowed Live"
-            width={160}
-            height={63}
+            width={1240}
+            height={500}
             priority
-            className="h-9 w-auto rounded"
+            className="h-9 w-auto"
           />
         </Link>
 

@@ -16,7 +16,7 @@ import { Button, Field } from "~/components/ui";
 import { authClient } from "~/utils/auth";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports -- static asset module id
-const LOGO = require("../../../assets/logo.jpg") as number;
+const LOGO = require("../../../assets/logo.png") as number;
 
 export default function SignIn() {
   const router = useRouter();
