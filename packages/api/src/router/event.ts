@@ -300,6 +300,15 @@ export const eventRouter = {
             message: "Capacity can't drop below reserved + sold",
           });
         }
+        // Same rule as create, checked against the values after this edit.
+        const salesStartAt = patch.salesStartAt ?? before.salesStartAt;
+        const salesEndAt = patch.salesEndAt ?? before.salesEndAt;
+        if (salesStartAt && salesEndAt && salesStartAt > salesEndAt) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Sales start must be before sales end",
+          });
+        }
         const [row] = await tx
           .update(ticketTier)
           .set(patch)
