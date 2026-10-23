@@ -35,6 +35,44 @@ import { signedProofUrl } from "../lib";
 import { permissionProcedure, protectedProcedure } from "../trpc";
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+type Db = typeof db;
+
+/**
+ * A refund request plus what reviewers need to see without `users:read`:
+ * the order, its concert and the buyer.
+ */
+export interface RefundQueueRow extends RefundRequest {
+  orderCode: string | null;
+  totalAmount: number | null;
+  eventId: string | null;
+  eventTitle: string | null;
+  buyerName: string | null;
+  buyerEmail: string | null;
+}
+
+function refundRowQuery(dbc: Db | Tx) {
+  return dbc
+    .select({
+      refund: refundRequest,
+      orderCode: order.code,
+      totalAmount: order.totalAmount,
+      eventId: order.eventId,
+      eventTitle: event.title,
+      buyerName: user.name,
+      buyerEmail: user.email,
+    })
+    .from(refundRequest)
+    .leftJoin(order, eq(refundRequest.orderId, order.id))
+    .leftJoin(event, eq(order.eventId, event.id))
+    .leftJoin(user, eq(refundRequest.userId, user.id));
+}
+
+function toRefundRow(
+  r: Awaited<ReturnType<typeof refundRowQuery>>[number],
+): RefundQueueRow {
+  const { refund, ...rest } = r;
+  return { ...refund, ...rest };
+}
 
 export const refundRouter = {
   /** Customer requests a refund (allowed until refundCutoffDays before start). */
@@ -143,7 +181,7 @@ export const refundRouter = {
   /* ------------------------------ staff queue ----------------------------- */
   queue: permissionProcedure("refunds:review")
     .input(listRefundsSchema)
-    .query(async ({ ctx, input }): Promise<Paginated<RefundRequest>> => {
+    .query(async ({ ctx, input }): Promise<Paginated<RefundQueueRow>> => {
       const filters = [];
       if (input.status) filters.push(eq(refundRequest.status, input.status));
       if (input.eventId) {
@@ -153,10 +191,8 @@ export const refundRouter = {
       }
       const where = filters.length ? and(...filters) : undefined;
       const offset = (input.page - 1) * input.pageSize;
-      const [items, [totalRow]] = await Promise.all([
-        ctx.db
-          .select()
-          .from(refundRequest)
+      const [rows, [totalRow]] = await Promise.all([
+        refundRowQuery(ctx.db)
           .where(where)
           .orderBy(desc(refundRequest.createdAt))
           .limit(input.pageSize)
@@ -164,11 +200,24 @@ export const refundRouter = {
         ctx.db.select({ value: count() }).from(refundRequest).where(where),
       ]);
       return {
-        items,
+        items: rows.map(toRefundRow),
         total: totalRow?.value ?? 0,
         page: input.page,
         pageSize: input.pageSize,
       };
+    }),
+
+  /** One refund request with its order / concert / buyer (review screen). */
+  byId: permissionProcedure("refunds:review")
+    .input(z.object({ id: z.string().min(1) }))
+    .query(async ({ ctx, input }): Promise<RefundQueueRow> => {
+      const [row] = await refundRowQuery(ctx.db)
+        .where(eq(refundRequest.id, input.id))
+        .limit(1);
+      if (!row) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Refund not found" });
+      }
+      return toRefundRow(row);
     }),
 
   /** Approve → tickets void immediately, seats/tier released, order stays approved until paid. */

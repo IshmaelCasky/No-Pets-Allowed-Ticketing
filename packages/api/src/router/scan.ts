@@ -52,6 +52,11 @@ export interface ScanResponse {
   usedByName: string | null;
 }
 
+/** Scanner history row: a scan log without the raw value (see `history`). */
+export type ScanHistoryRow = Omit<ScanLog, "rawValue"> & {
+  rawValuePreview: string | null;
+};
+
 /** One live (non-void) ticket on the Check-ins tab. */
 export interface CheckinRow {
   ticketId: string;
@@ -345,12 +350,16 @@ export const scanRouter = {
       });
     }),
 
+  /**
+   * Recent scans for the scanner screen. The raw scanned value is only
+   * returned for unknown codes — for real tickets it IS the ticket token.
+   */
   history: permissionProcedure("tickets:scan")
     .input(paginationSchema.extend({ eventId: idSchema }))
-    .query(async ({ ctx, input }): Promise<Paginated<ScanLog>> => {
+    .query(async ({ ctx, input }): Promise<Paginated<ScanHistoryRow>> => {
       const where = eq(scanLog.eventId, input.eventId);
       const offset = (input.page - 1) * input.pageSize;
-      const [items, [totalRow]] = await Promise.all([
+      const [rows, [totalRow]] = await Promise.all([
         ctx.db
           .select()
           .from(scanLog)
@@ -361,7 +370,11 @@ export const scanRouter = {
         ctx.db.select({ value: count() }).from(scanLog).where(where),
       ]);
       return {
-        items,
+        items: rows.map(({ rawValue, ...rest }) => ({
+          ...rest,
+          rawValuePreview:
+            rest.ticketId === null ? rawValue.slice(0, 40) : null,
+        })),
         total: totalRow?.value ?? 0,
         page: input.page,
         pageSize: input.pageSize,
