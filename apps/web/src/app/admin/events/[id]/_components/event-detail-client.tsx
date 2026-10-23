@@ -61,7 +61,7 @@ export function EventDetailClient({ eventId }: { eventId: string }) {
   const update = useMutation(
     trpc.event.update.mutationOptions({
       onSuccess: () => {
-        toast.success("Event updated");
+        toast.success("Concert updated");
         setEditOpen(false);
         invalidate();
       },
@@ -82,7 +82,7 @@ export function EventDetailClient({ eventId }: { eventId: string }) {
   const remove = useMutation(
     trpc.event.delete.mutationOptions({
       onSuccess: () => {
-        toast.success("Event deleted");
+        toast.success("Concert deleted");
         router.push("/admin/events");
       },
       onError: (e) => toast.error(e.message),
@@ -137,7 +137,7 @@ export function EventDetailClient({ eventId }: { eventId: string }) {
               </DialogTrigger>
               <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
                 <DialogHeader>
-                  <DialogTitle>Edit event</DialogTitle>
+                  <DialogTitle>Edit concert</DialogTitle>
                 </DialogHeader>
                 <EventForm
                   event={event}
@@ -155,9 +155,10 @@ export function EventDetailClient({ eventId }: { eventId: string }) {
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Delete this event?</AlertDialogTitle>
+                  <AlertDialogTitle>Delete this concert?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This cannot be undone. Events with orders cannot be deleted.
+                    This cannot be undone. Concerts with orders cannot be
+                    deleted.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

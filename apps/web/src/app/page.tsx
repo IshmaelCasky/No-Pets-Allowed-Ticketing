@@ -35,7 +35,7 @@ export default async function LandingPage() {
           />
           <div className="relative mx-auto max-w-6xl px-5 py-20 sm:py-28">
             <p className="text-sm font-semibold tracking-widest text-[oklch(0.72_0.17_348)]">
-              {featured ? "Next show" : "No Pets Allowed"}
+              {featured ? "Next concert" : "No Pets Allowed"}
             </p>
             <h1 className="mt-4 max-w-4xl font-black tracking-tight uppercase">
               <span className="block text-5xl leading-[0.95] sm:text-7xl lg:text-8xl">
@@ -71,17 +71,17 @@ export default async function LandingPage() {
                 href="/events"
                 className="inline-flex items-center justify-center rounded-full border border-[oklch(0.35_0.02_310)] px-8 py-3.5 text-sm font-semibold tracking-wide transition-colors hover:border-[oklch(0.62_0.21_350)]"
               >
-                See all shows
+                See all concerts
               </Link>
             </div>
           </div>
         </section>
 
-        {/* ------------------------------------------------- upcoming shows */}
+        {/* ------------------------------------------------- upcoming concerts */}
         <section className="mx-auto max-w-6xl px-5 py-16">
           <div className="flex items-end justify-between">
             <h2 className="text-3xl font-black tracking-tight uppercase sm:text-4xl">
-              Upcoming shows
+              Upcoming concerts
             </h2>
             <Link
               href="/events"
@@ -92,7 +92,7 @@ export default async function LandingPage() {
           </div>
           {upcoming.length === 0 ? (
             <p className="mt-8 text-[oklch(0.68_0.018_309)]">
-              No shows announced yet. Check back soon.
+              No concerts announced yet. Check back soon.
             </p>
           ) : (
             <div className="mt-8 grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4">
@@ -229,9 +229,9 @@ export default async function LandingPage() {
             </h2>
             <p className="mt-4 max-w-3xl text-lg text-[oklch(0.78_0.012_309)]">
               No Pets Allowed is a live-music series built around loud rooms and
-              louder crowds. Every show is a single, unrepeatable night — real
-              bands, real sweat, no autotune. Tickets are limited and paid by
-              QR, so grab yours before the room fills up.
+              louder crowds. Every concert is a single, unrepeatable night —
+              real bands, real sweat, no autotune. Tickets are limited and paid
+              by QR, so grab yours before the room fills up.
             </p>
           </div>
         </section>
@@ -257,10 +257,10 @@ export default async function LandingPage() {
               },
               {
                 q: "Can I get a refund?",
-                a: "Yes. You can request a refund in-app on an approved order up until the refund cutoff before the event (set per show, typically 7 days before). Used tickets can't be refunded.",
+                a: "Yes. You can request a refund in-app on an approved order up until the refund cutoff before the concert (set per concert, typically 7 days before). Used tickets can't be refunded.",
               },
               {
-                q: "How do I get into the show?",
+                q: "How do I get into the concert?",
                 a: "Open My Tickets, show the full-screen QR ticket at the gate, and staff scan you in. Each ticket scans once.",
               },
             ].map((item) => (

@@ -44,7 +44,7 @@ export function EventsClient() {
   const create = useMutation(
     trpc.event.create.mutationOptions({
       onSuccess: () => {
-        toast.success("Event created");
+        toast.success("Concert created");
         setCreateOpen(false);
         void queryClient.invalidateQueries(trpc.event.list.queryFilter());
       },
@@ -93,7 +93,7 @@ export function EventsClient() {
       pageSize={20}
       onPageChange={setPage}
       isLoading={isLoading}
-      emptyMessage="No events yet."
+      emptyMessage="No concerts yet."
       toolbar={
         <div className="flex items-center justify-between gap-4">
           <Input
@@ -104,11 +104,11 @@ export function EventsClient() {
           />
           <Dialog open={createOpen} onOpenChange={setCreateOpen}>
             <DialogTrigger asChild>
-              <Button>New event</Button>
+              <Button>New concert</Button>
             </DialogTrigger>
             <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
               <DialogHeader>
-                <DialogTitle>Create event</DialogTitle>
+                <DialogTitle>Create concert</DialogTitle>
               </DialogHeader>
               <EventForm
                 isPending={create.isPending}

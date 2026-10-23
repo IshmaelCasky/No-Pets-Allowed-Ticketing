@@ -6,7 +6,7 @@ export default function ScannerPage() {
     <div>
       <PageHeader
         title="QR Scanner"
-        description="Scan tickets at the gate. Pick an event, then scan or enter a code."
+        description="Scan tickets at the gate. Pick a concert, then scan or enter a code."
       />
       <ScannerClient />
     </div>

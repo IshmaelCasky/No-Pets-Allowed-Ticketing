@@ -66,7 +66,7 @@ export default async function MyTicketsPage() {
             href="/events"
             className="mt-4 inline-flex rounded-full bg-[oklch(0.62_0.21_350)] px-6 py-2.5 text-sm font-bold text-white hover:bg-[oklch(0.68_0.2_349)]"
           >
-            Browse shows
+            Browse concerts
           </Link>
         </div>
       ) : (
@@ -90,7 +90,7 @@ export default async function MyTicketsPage() {
                           <p className="font-bold">
                             {eventTitle.get(t.eventId) ??
                               orderByEvent.get(t.eventId) ??
-                              "Show"}
+                              "Concert"}
                           </p>
                           <p className="text-sm text-[oklch(0.68_0.018_309)]">
                             {t.seatId

@@ -85,7 +85,7 @@ export function ReservedCheckout({
   if (!data || data.sections.length === 0) {
     return (
       <p className="text-[oklch(0.68_0.018_309)]">
-        The seat map for this show isn’t ready yet.
+        The seat map for this concert isn’t ready yet.
       </p>
     );
   }

@@ -19,13 +19,18 @@ export function ImageUploadField({
   value,
   onUploaded,
   label = "Upload image",
+  fieldId,
 }: {
   endpoint: ImageEndpoint;
   /** Current preview URL (if any). */
   value?: string | null;
   onUploaded: (result: { key: string; url?: string }) => void;
   label?: string;
+  /** Unique id for the file input, to avoid label/input collisions when the
+   * same endpoint is used more than once on a page. Defaults to the endpoint. */
+  fieldId?: string;
 }) {
+  const inputId = `upload-${fieldId ?? endpoint}`;
   const [preview, setPreview] = useState<string | null>(value ?? null);
   const { startUpload, isUploading } = useUploadThing(endpoint, {
     onClientUploadComplete: (res) => {
@@ -57,7 +62,7 @@ export function ImageUploadField({
           accept="image/jpeg,image/png,image/webp"
           disabled={isUploading}
           className="hidden"
-          id={`upload-${endpoint}`}
+          id={inputId}
           onChange={(e) => {
             const file = e.target.files?.[0];
             if (file) {
@@ -67,7 +72,7 @@ export function ImageUploadField({
           }}
         />
         <Button type="button" variant="outline" size="sm" asChild>
-          <label htmlFor={`upload-${endpoint}`} className="cursor-pointer">
+          <label htmlFor={inputId} className="cursor-pointer">
             {isUploading ? "Uploading…" : label}
           </label>
         </Button>

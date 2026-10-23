@@ -18,7 +18,7 @@ const ACTION_LABELS: Record<string, string> = {
 
 /** Human labels for the `resource` half (prefix before ':'). */
 const RESOURCE_LABELS: Record<string, string> = {
-  events: "Events",
+  events: "Concerts",
   orders: "Orders",
   refunds: "Refunds",
   payment_methods: "Payment methods",
