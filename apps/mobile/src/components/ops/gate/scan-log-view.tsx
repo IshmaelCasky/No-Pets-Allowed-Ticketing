@@ -147,7 +147,7 @@ export function ScanLogView({ initialEventId }: { initialEventId?: string }) {
             <SearchBar
               value={search}
               onChangeText={setSearch}
-              placeholder="Holder, buyer, order, seat"
+              placeholder="Holder, buyer, order"
             />
           </View>
           <Button
@@ -197,9 +197,8 @@ export function ScanLogView({ initialEventId }: { initialEventId?: string }) {
             <ListRow
               title={rowTitle(item)}
               subtitle={
-                [item.seatLabel ?? item.tierName, item.orderCode]
-                  .filter(Boolean)
-                  .join(" · ") || null
+                [item.tierName, item.orderCode].filter(Boolean).join(" · ") ||
+                null
               }
               meta={[
                 formatManila(item.createdAt),

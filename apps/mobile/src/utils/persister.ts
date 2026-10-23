@@ -16,7 +16,6 @@ const OFFLINE_PROCEDURES = new Set([
   "ticket.byId",
   "order.myOrders",
   "event.publicList",
-  "seatMap.forEvent",
 ]);
 
 export function isOfflineQuery(query: {

@@ -148,9 +148,7 @@ export function ScanLogTab({ events }: { events: ScanEventOption[] }) {
       id: "ticket",
       header: "Ticket",
       cell: (r) => (
-        <span className="whitespace-nowrap">
-          {r.seatLabel ?? r.tierName ?? "—"}
-        </span>
+        <span className="whitespace-nowrap">{r.tierName ?? "—"}</span>
       ),
     },
     {
@@ -256,7 +254,7 @@ export function ScanLogTab({ events }: { events: ScanEventOption[] }) {
           key={searchKey}
           value={search}
           onChange={(q) => setParams({ logQ: q })}
-          placeholder="Holder, buyer, email, order, seat"
+          placeholder="Holder, buyer, email, order"
         />
       </FilterField>
       <div className="flex gap-2">

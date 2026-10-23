@@ -153,9 +153,7 @@ export function CheckinsTab({
       id: "ticket",
       header: "Ticket",
       cell: (r) => (
-        <span className="whitespace-nowrap">
-          {r.seatLabel ?? r.tierName ?? "—"}
-        </span>
+        <span className="whitespace-nowrap">{r.tierName ?? "—"}</span>
       ),
     },
     {
@@ -214,7 +212,7 @@ export function CheckinsTab({
         <SearchInput
           value={search}
           onChange={(q) => setParams({ q })}
-          placeholder="Holder, buyer, email, order, seat"
+          placeholder="Holder, buyer, email, order"
         />
       </FilterField>
       <Button

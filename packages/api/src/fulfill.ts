@@ -30,7 +30,7 @@ export interface FulfillResult {
  * current row with `alreadyFulfilled: true` and does nothing. Call inside a
  * transaction; the caller handles audit + the approval email.
  *
- * Seats `held → sold`, GA tier `reserved → sold`, one ticket per seat / per GA
+ * Ticket-type inventory moves `reserved → sold`, one ticket per unit of
  * quantity, `paidAt` set.
  */
 export async function fulfillPaidOrderTx(

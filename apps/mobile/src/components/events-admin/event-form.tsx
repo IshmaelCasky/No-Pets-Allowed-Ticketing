@@ -1,16 +1,14 @@
 import { useState } from "react";
 import { Text, View } from "react-native";
 
-import type { CreateEventInput, SeatingMode } from "@npa/validators";
+import type { CreateEventInput } from "@npa/validators";
 import { createEventSchema } from "@npa/validators";
 
 import type { FieldErrors } from "./form-utils";
 import type { RouterOutputs } from "~/utils/api";
 import { Button, Field } from "~/components/ui";
 import {
-  ChoiceRow,
   DateTimeField,
-  FieldShell,
   FormScroll,
   ImageUploadField,
   TextAreaField,
@@ -38,14 +36,8 @@ type Key =
   | "lineup"
   | "description"
   | "posterUrl"
-  | "seatingMode"
   | "maxPerOrder"
   | "refundCutoffDays";
-
-const SEATING_OPTIONS: readonly { value: SeatingMode; label: string }[] = [
-  { value: "ga", label: "General admission" },
-  { value: "reserved", label: "Reserved seats" },
-];
 
 /**
  * Create / edit a concert. Mirrors the web form; validates with the shared
@@ -53,14 +45,11 @@ const SEATING_OPTIONS: readonly { value: SeatingMode; label: string }[] = [
  */
 export function EventForm({
   initial,
-  seatingModeLocked,
   submitting,
   submitLabel,
   onSubmit,
 }: {
   initial?: Concert;
-  /** Seating mode can't change once orders exist (enforced by the API). */
-  seatingModeLocked?: boolean;
   submitting: boolean;
   submitLabel: string;
   onSubmit: (values: EventFormValues) => void;
@@ -77,9 +66,6 @@ export function EventForm({
   const [lineup, setLineup] = useState(initial?.lineup ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [posterUrl, setPosterUrl] = useState(initial?.posterUrl ?? "");
-  const [seatingMode, setSeatingMode] = useState<SeatingMode>(
-    initial?.seatingMode ?? "ga",
-  );
   const [maxPerOrder, setMaxPerOrder] = useState(
     String(initial?.maxPerOrder ?? 4),
   );
@@ -115,7 +101,6 @@ export function EventForm({
       lineup: editing ? lineup.trim() : blankToUndefined(lineup),
       description: editing ? description.trim() : blankToUndefined(description),
       posterUrl: blankToUndefined(posterUrl),
-      seatingMode,
       maxPerOrder: parseIntField(maxPerOrder),
       refundCutoffDays: parseIntField(refundCutoffDays),
     });
@@ -195,23 +180,6 @@ export function EventForm({
       {errors.posterUrl ? (
         <Text className="text-destructive text-xs">{errors.posterUrl}</Text>
       ) : null}
-
-      <FieldShell
-        label="Seating mode"
-        hint={
-          seatingModeLocked
-            ? "Locked — this concert already has orders."
-            : "GA sells ticket tiers; reserved sells exact seats from a seat map."
-        }
-        error={errors.seatingMode}
-      >
-        <ChoiceRow
-          options={SEATING_OPTIONS}
-          value={seatingMode}
-          onChange={setSeatingMode}
-          disabled={seatingModeLocked}
-        />
-      </FieldShell>
 
       <View className="flex-row gap-3">
         <View className="flex-1">

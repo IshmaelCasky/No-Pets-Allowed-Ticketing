@@ -77,9 +77,7 @@ function ConcertRow({
           {formatManila(concert.startsAt)}
         </Text>
         <Text className="text-muted-foreground text-xs" numberOfLines={1}>
-          {[concert.venue, concert.seatingMode === "ga" ? "GA" : "Reserved"]
-            .filter(Boolean)
-            .join(" · ")}
+          {concert.venue}
         </Text>
       </View>
       <Pill

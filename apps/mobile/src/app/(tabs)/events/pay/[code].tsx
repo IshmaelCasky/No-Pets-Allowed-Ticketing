@@ -124,7 +124,7 @@ export default function PayScreen() {
           </Text>
           <Text className="text-muted-foreground text-sm">
             {order.status === "expired"
-              ? "This order expired before payment was confirmed. Your seats have been released."
+              ? "This order expired before payment was confirmed. Your tickets have been released."
               : order.status === "cancelled"
                 ? "This order was cancelled."
                 : "This order is no longer awaiting payment."}

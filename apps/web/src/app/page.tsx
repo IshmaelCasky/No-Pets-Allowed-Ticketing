@@ -180,7 +180,7 @@ export default async function LandingPage() {
               {
                 step: "01",
                 title: "Pay via QR",
-                body: "Reserve your seats or tier, then scan the GCash, Maya or bank QR and send the exact amount within the 30-minute window.",
+                body: "Pick your ticket type, then scan the GCash, Maya or bank QR and send the exact amount within the 30-minute window.",
               },
               {
                 step: "02",

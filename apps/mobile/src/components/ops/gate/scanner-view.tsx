@@ -208,21 +208,16 @@ export function ScannerView({
     refetchInterval: focused ? 5000 : false,
   });
 
-  // Seat / tier names for the result overlay (both are public reads).
+  // Tier names for the result overlay (a public read).
   const tiersQ = useQuery(trpc.event.tiersByEvent.queryOptions({ eventId }));
-  const seatsQ = useQuery(trpc.seatMap.forEvent.queryOptions({ eventId }));
   const labelFor = useMemo(() => {
     const tiers = new Map((tiersQ.data ?? []).map((t) => [t.id, t.name]));
-    const seats = new Map(
-      (seatsQ.data?.seats ?? []).map((s) => [s.id, s.label]),
-    );
     return (ticket: ScanResponse["ticket"]): string | null => {
       if (!ticket) return null;
-      if (ticket.seatId) return seats.get(ticket.seatId) ?? null;
       if (ticket.tierId) return tiers.get(ticket.tierId) ?? null;
       return null;
     };
-  }, [tiersQ.data, seatsQ.data]);
+  }, [tiersQ.data]);
 
   const scan = useMutation(
     trpc.scan.scan.mutationOptions({
@@ -380,7 +375,7 @@ export function ScannerView({
                       className="text-muted-foreground text-xs"
                       numberOfLines={1}
                     >
-                      {[log.seatLabel ?? log.tierName, log.scannedByName]
+                      {[log.tierName, log.scannedByName]
                         .filter(Boolean)
                         .join(" · ") || "—"}
                     </Text>

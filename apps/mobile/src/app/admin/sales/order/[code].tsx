@@ -100,7 +100,7 @@ function ItemsBuyerTickets({ order }: { order: Order }) {
             <View key={it.id} className="flex-row items-start gap-3">
               <View className="flex-1">
                 <Text className="text-foreground text-sm font-semibold">
-                  {it.seatLabel ?? it.tierName ?? "Ticket"}
+                  {it.tierName ?? "Ticket"}
                 </Text>
                 <Text className="text-muted-foreground text-xs">
                   {it.quantity} × {formatCentavos(it.unitPrice)}
@@ -141,7 +141,7 @@ function ItemsBuyerTickets({ order }: { order: Order }) {
               <View key={t.id} className="flex-row items-center gap-3">
                 <View className="flex-1">
                   <Text className="text-foreground text-sm font-semibold">
-                    {t.seatLabel ?? t.tierName ?? "Ticket"}
+                    {t.tierName ?? "Ticket"}
                   </Text>
                   <Text className="text-muted-foreground text-xs">
                     {t.holderName ?? order.buyerName ?? "—"}
@@ -187,7 +187,7 @@ function CancelOrder({ order }: { order: Order }) {
       <SectionHeader title="Cancel order" />
       <Card className="gap-3">
         <Text className="text-muted-foreground text-sm">
-          Held seats or tier inventory will be released. This cannot be undone.
+          Held tier inventory will be released. This cannot be undone.
         </Text>
         <Field
           label="Note (optional)"
@@ -205,7 +205,7 @@ function CancelOrder({ order }: { order: Order }) {
             confirm({
               title: `Cancel order ${order.code}?`,
               message:
-                "Held seats or tier inventory will be released. This cannot be undone.",
+                "Held tier inventory will be released. This cannot be undone.",
               confirmLabel: "Cancel order",
               destructive: true,
               onConfirm: () =>

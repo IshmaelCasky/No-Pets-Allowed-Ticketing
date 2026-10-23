@@ -22,10 +22,6 @@ export const TICKET_STATUSES = ["active", "used", "void"] as const;
 export const ticketStatusSchema = z.enum(TICKET_STATUSES);
 export type TicketStatus = z.infer<typeof ticketStatusSchema>;
 
-export const SEAT_STATUSES = ["available", "held", "sold", "blocked"] as const;
-export const seatStatusSchema = z.enum(SEAT_STATUSES);
-export type SeatStatus = z.infer<typeof seatStatusSchema>;
-
 export const EVENT_STATUSES = [
   "draft",
   "published",
@@ -34,10 +30,6 @@ export const EVENT_STATUSES = [
 ] as const;
 export const eventStatusSchema = z.enum(EVENT_STATUSES);
 export type EventStatus = z.infer<typeof eventStatusSchema>;
-
-export const SEATING_MODES = ["ga", "reserved"] as const;
-export const seatingModeSchema = z.enum(SEATING_MODES);
-export type SeatingMode = z.infer<typeof seatingModeSchema>;
 
 export const REFUND_STATUSES = [
   "requested",
@@ -57,10 +49,6 @@ export const SCAN_RESULTS = [
 ] as const;
 export const scanResultSchema = z.enum(SCAN_RESULTS);
 export type ScanResult = z.infer<typeof scanResultSchema>;
-
-export const ROW_LABEL_STYLES = ["alpha", "numeric"] as const;
-export const rowLabelStyleSchema = z.enum(ROW_LABEL_STYLES);
-export type RowLabelStyle = z.infer<typeof rowLabelStyleSchema>;
 
 /**
  * Permission keys (`resource:action`). Code checks these keys, never role

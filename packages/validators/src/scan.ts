@@ -23,7 +23,7 @@ export type CheckinFilter = z.infer<typeof checkinFilterSchema>;
 
 /**
  * Check-ins tab: every live (non-void) ticket for one event with its arrival
- * state. `search` matches holder / buyer name, buyer email, order code, seat.
+ * state. `search` matches holder / buyer name, buyer email, order code.
  */
 export const listCheckinsSchema = paginationSchema.extend({
   eventId: idSchema,
@@ -33,7 +33,7 @@ export type ListCheckinsInput = z.infer<typeof listCheckinsSchema>;
 
 /**
  * Scan log tab: every scan attempt, including failures. All filters optional.
- * `search` matches holder / buyer name, buyer email, order code, seat.
+ * `search` matches holder / buyer name, buyer email, order code.
  */
 export const listScanLogsSchema = paginationSchema.extend({
   eventId: idSchema.optional(),

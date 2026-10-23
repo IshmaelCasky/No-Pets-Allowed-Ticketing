@@ -64,8 +64,6 @@ export const PERMISSION_GROUPS: readonly PermissionGroup[] = (() => {
 export const AUDIT_ENTITY_TYPES = [
   { value: "event", label: "Concert" },
   { value: "ticket_tier", label: "Ticket type" },
-  { value: "seat_section", label: "Seat section" },
-  { value: "seat", label: "Seat" },
   { value: "order", label: "Order" },
   { value: "refund_request", label: "Refund" },
   { value: "ticket", label: "Ticket" },
@@ -86,13 +84,6 @@ export const AUDIT_ACTIONS: Record<AuditEntityType, readonly string[]> = {
     "ticket_tier.update",
     "ticket_tier.delete",
   ],
-  seat_section: [
-    "seat_section.create",
-    "seat_section.update",
-    "seat_section.reorder",
-    "seat_section.delete",
-  ],
-  seat: [],
   order: ["order.create", "order.paid", "order.cancel"],
   refund_request: [
     "refund.request",

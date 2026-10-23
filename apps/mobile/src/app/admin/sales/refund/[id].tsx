@@ -367,7 +367,7 @@ function RefundDetail({ id }: { id: string }) {
               confirm({
                 title: "Approve refund?",
                 message:
-                  "The order's tickets are voided immediately and their seats / tier inventory released. Then send the payout and mark it paid.",
+                  "The order's tickets are voided immediately and their tier inventory released. Then send the payout and mark it paid.",
                 confirmLabel: "Approve",
                 destructive: true,
                 onConfirm: () => approve.mutate({ refundRequestId: refund.id }),

@@ -27,7 +27,6 @@ import {
   event,
   order,
   scanLog,
-  seat,
   ticket,
   ticketTier,
   user,
@@ -75,7 +74,6 @@ export interface CheckinRow {
   buyerEmail: string | null;
   orderCode: string;
   tierName: string | null;
-  seatLabel: string | null;
   usedAt: Date | null;
   usedByName: string | null;
 }
@@ -102,7 +100,6 @@ export interface ScanLogRow {
   buyerName: string | null;
   orderCode: string | null;
   tierName: string | null;
-  seatLabel: string | null;
   scannedById: string;
   scannedByName: string | null;
   device: string | null;
@@ -124,7 +121,7 @@ const scannedBy = alias(user, "scanned_by");
 /**
  * Buyer emails are customer contact data: only roles that already see
  * customers (`orders:read` / `users:read`) get them, or can search by them.
- * Gate scanners (`tickets:scan` only) see names, codes and seats.
+ * Gate scanners (`tickets:scan` only) see names and codes.
  */
 function canSeeEmails(permissions: Set<string>): boolean {
   return permissions.has("orders:read") || permissions.has("users:read");
@@ -145,7 +142,6 @@ function checkinFilters(input: ListCheckinsInput, withEmail: boolean): SQL[] {
       ilike(buyer.name, q),
       withEmail ? ilike(buyer.email, q) : undefined,
       ilike(order.code, q),
-      ilike(seat.label, q),
     );
     if (match) filters.push(match);
   }
@@ -162,7 +158,6 @@ function checkinQuery(db: Db, where: SQL) {
       buyerEmail: buyer.email,
       orderCode: order.code,
       tierName: ticketTier.name,
-      seatLabel: seat.label,
       usedAt: ticket.usedAt,
       usedByName: usedBy.name,
     })
@@ -170,7 +165,6 @@ function checkinQuery(db: Db, where: SQL) {
     .innerJoin(order, eq(ticket.orderId, order.id))
     .leftJoin(buyer, eq(order.userId, buyer.id))
     .leftJoin(ticketTier, eq(ticket.tierId, ticketTier.id))
-    .leftJoin(seat, eq(ticket.seatId, seat.id))
     .leftJoin(usedBy, eq(ticket.usedById, usedBy.id))
     .where(where)
     .orderBy(sql`${ticket.usedAt} desc nulls last`, asc(ticket.createdAt));
@@ -191,7 +185,6 @@ function scanLogFilters(input: ListScanLogsInput, withEmail: boolean): SQL[] {
       ilike(buyer.name, q),
       withEmail ? ilike(buyer.email, q) : undefined,
       ilike(order.code, q),
-      ilike(seat.label, q),
     );
     if (match) filters.push(match);
   }
@@ -211,7 +204,6 @@ function scanLogQuery(db: Db, where?: SQL) {
       buyerName: buyer.name,
       orderCode: order.code,
       tierName: ticketTier.name,
-      seatLabel: seat.label,
       scannedById: scanLog.scannedById,
       scannedByName: scannedBy.name,
       device: scanLog.device,
@@ -223,7 +215,6 @@ function scanLogQuery(db: Db, where?: SQL) {
     .leftJoin(order, eq(ticket.orderId, order.id))
     .leftJoin(buyer, eq(order.userId, buyer.id))
     .leftJoin(ticketTier, eq(ticket.tierId, ticketTier.id))
-    .leftJoin(seat, eq(ticket.seatId, seat.id))
     .leftJoin(scannedBy, eq(scanLog.scannedById, scannedBy.id))
     .where(where)
     .orderBy(desc(scanLog.createdAt));
@@ -474,7 +465,6 @@ export const scanRouter = {
           .from(ticket)
           .innerJoin(order, eq(ticket.orderId, order.id))
           .leftJoin(buyer, eq(order.userId, buyer.id))
-          .leftJoin(seat, eq(ticket.seatId, seat.id))
           .where(where),
         ctx.db
           .select({
@@ -523,7 +513,7 @@ export const scanRouter = {
         r.holderName ?? r.buyerName ?? "",
         r.buyerName ?? "",
         ...(withEmail ? [r.buyerEmail ?? ""] : []),
-        r.seatLabel ?? r.tierName ?? "",
+        r.tierName ?? "",
         r.status === "used" ? "Yes" : "No",
         csvTime(r.usedAt),
         r.usedByName ?? "",
@@ -546,7 +536,6 @@ export const scanRouter = {
           .leftJoin(ticket, eq(scanLog.ticketId, ticket.id))
           .leftJoin(order, eq(ticket.orderId, order.id))
           .leftJoin(buyer, eq(order.userId, buyer.id))
-          .leftJoin(seat, eq(ticket.seatId, seat.id))
           .where(where),
       ]);
       return {
@@ -583,7 +572,7 @@ export const scanRouter = {
         r.eventTitle ?? "",
         r.orderCode ?? "",
         r.holderName ?? r.buyerName ?? "",
-        r.seatLabel ?? r.tierName ?? "",
+        r.tierName ?? "",
         r.scannedByName ?? "",
         r.device ?? "",
         r.rawValuePreview ?? "",

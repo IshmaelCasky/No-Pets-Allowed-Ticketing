@@ -12,11 +12,9 @@ import type { EventStatus } from "@npa/validators";
 
 import type { RouterOutputs } from "~/utils/api";
 import { KeyValue, Pill, RequirePerm, SectionHeader } from "~/components/admin";
-import { SectionPanel } from "~/components/events-admin/section-panel";
 import {
   EVENT_STATUS_TONE,
   eventStatusLabel,
-  seatingModeLabel,
 } from "~/components/events-admin/status";
 import { TierPanel } from "~/components/events-admin/tier-panel";
 import { useConcertInventory } from "~/components/events-admin/use-inventory";
@@ -122,7 +120,6 @@ function Facts({ concert }: { concert: Concert }) {
       <KeyValue label="Starts" value={formatManila(concert.startsAt)} />
       <KeyValue label="Doors open" value={formatManila(concert.doorsOpenAt)} />
       <KeyValue label="Venue" value={concert.venue ?? "—"} />
-      <KeyValue label="Seating" value={seatingModeLabel(concert.seatingMode)} />
       <KeyValue label="Max per order" value={concert.maxPerOrder} />
       <KeyValue
         label="Refund cutoff"
@@ -272,16 +269,7 @@ function ConcertDetail({ id }: { id: string }) {
         />
       </View>
 
-      {concert.seatingMode === "ga" ? (
-        <TierPanel eventId={id} tiers={inventory.tiers} canWrite={canWrite} />
-      ) : (
-        <SectionPanel
-          eventId={id}
-          sections={inventory.sections}
-          seatsBySection={inventory.seatsBySection}
-          canWrite={canWrite}
-        />
-      )}
+      <TierPanel eventId={id} tiers={inventory.tiers} canWrite={canWrite} />
 
       {canDelete ? (
         <View className="gap-2 pt-4">

@@ -46,21 +46,12 @@ export const orderStatus = pgEnum("order_status", [
 
 export const ticketStatus = pgEnum("ticket_status", ["active", "used", "void"]);
 
-export const seatStatus = pgEnum("seat_status", [
-  "available",
-  "held",
-  "sold",
-  "blocked",
-]);
-
 export const eventStatus = pgEnum("event_status", [
   "draft",
   "published",
   "ended",
   "cancelled",
 ]);
-
-export const seatingMode = pgEnum("seating_mode", ["ga", "reserved"]);
 
 export const refundStatus = pgEnum("refund_status", [
   "requested",
@@ -76,8 +67,6 @@ export const scanResult = pgEnum("scan_result", [
   "void",
   "not_found",
 ]);
-
-export const rowLabelStyle = pgEnum("row_label_style", ["alpha", "numeric"]);
 
 /* -------------------------------------------------------------------------- */
 /*  Permissions                                                               */

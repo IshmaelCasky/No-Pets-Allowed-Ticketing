@@ -93,10 +93,10 @@ function releasableStatuses() {
 
 export const orderRouter = {
   /**
-   * Create an order. Reserves seats/tier inventory in one transaction and sets
+   * Create an order. Reserves ticket-type inventory in one transaction and sets
    * the 30-minute payment window (`expiresAt`), then creates a HitPay payment
-   * request and returns its hosted-checkout URL. Reserved seats taken mid-
-   * checkout throw CONFLICT with the taken seat ids.
+   * request and returns its hosted-checkout URL. A ticket type that sells out
+   * mid-checkout throws CONFLICT.
    */
   create: protectedProcedure
     .input(createOrderSchema)
@@ -423,12 +423,10 @@ export const orderRouter = {
             status: ticket.status,
             holderName: ticket.holderName,
             tierName: ticketTier.name,
-            seatLabel: seat.label,
             usedAt: ticket.usedAt,
           })
           .from(ticket)
           .leftJoin(ticketTier, eq(ticket.tierId, ticketTier.id))
-          .leftJoin(seat, eq(ticket.seatId, seat.id))
           .where(eq(ticket.orderId, row.order.id))
           .orderBy(asc(ticket.createdAt)),
       ]);

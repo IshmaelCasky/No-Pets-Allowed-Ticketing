@@ -94,7 +94,7 @@ export function CheckinsView({
             <SearchBar
               value={search}
               onChangeText={setSearch}
-              placeholder="Name, email, order, seat"
+              placeholder="Name, email, order"
             />
           </View>
           <Button
@@ -146,7 +146,7 @@ export function CheckinsView({
           renderItem={({ item }) => (
             <ListRow
               title={item.holderName ?? item.buyerName ?? "—"}
-              subtitle={[item.seatLabel ?? item.tierName, item.orderCode]
+              subtitle={[item.tierName, item.orderCode]
                 .filter(Boolean)
                 .join(" · ")}
               meta={
