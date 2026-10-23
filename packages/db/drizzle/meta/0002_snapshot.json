@@ -152,12 +152,8 @@
           "name": "audit_log_actor_id_user_id_fk",
           "tableFrom": "audit_log",
           "tableTo": "user",
-          "columnsFrom": [
-            "actor_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["actor_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -302,9 +298,7 @@
         "event_slug_unique": {
           "name": "event_slug_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "slug"
-          ]
+          "columns": ["slug"]
         }
       },
       "policies": {},
@@ -467,12 +461,8 @@
           "name": "order_user_id_user_id_fk",
           "tableFrom": "order",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -480,12 +470,8 @@
           "name": "order_event_id_event_id_fk",
           "tableFrom": "order",
           "tableTo": "event",
-          "columnsFrom": [
-            "event_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["event_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -495,9 +481,7 @@
         "order_code_unique": {
           "name": "order_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "code"
-          ]
+          "columns": ["code"]
         }
       },
       "policies": {},
@@ -604,12 +588,8 @@
           "name": "order_item_order_id_order_id_fk",
           "tableFrom": "order_item",
           "tableTo": "order",
-          "columnsFrom": [
-            "order_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["order_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -617,12 +597,8 @@
           "name": "order_item_tier_id_ticket_tier_id_fk",
           "tableFrom": "order_item",
           "tableTo": "ticket_tier",
-          "columnsFrom": [
-            "tier_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tier_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -630,12 +606,8 @@
           "name": "order_item_seat_id_seat_id_fk",
           "tableFrom": "order_item",
           "tableTo": "seat",
-          "columnsFrom": [
-            "seat_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["seat_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -832,12 +804,8 @@
           "name": "refund_request_order_id_order_id_fk",
           "tableFrom": "refund_request",
           "tableTo": "order",
-          "columnsFrom": [
-            "order_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["order_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -845,12 +813,8 @@
           "name": "refund_request_user_id_user_id_fk",
           "tableFrom": "refund_request",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -858,12 +822,8 @@
           "name": "refund_request_reviewed_by_id_user_id_fk",
           "tableFrom": "refund_request",
           "tableTo": "user",
-          "columnsFrom": [
-            "reviewed_by_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["reviewed_by_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -925,9 +885,7 @@
         "role_name_unique": {
           "name": "role_name_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "name"
-          ]
+          "columns": ["name"]
         }
       },
       "policies": {},
@@ -1071,12 +1029,8 @@
           "name": "scan_log_ticket_id_ticket_id_fk",
           "tableFrom": "scan_log",
           "tableTo": "ticket",
-          "columnsFrom": [
-            "ticket_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["ticket_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -1084,12 +1038,8 @@
           "name": "scan_log_event_id_event_id_fk",
           "tableFrom": "scan_log",
           "tableTo": "event",
-          "columnsFrom": [
-            "event_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["event_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1097,12 +1047,8 @@
           "name": "scan_log_scanned_by_id_user_id_fk",
           "tableFrom": "scan_log",
           "tableTo": "user",
-          "columnsFrom": [
-            "scanned_by_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["scanned_by_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -1233,12 +1179,8 @@
           "name": "seat_section_id_seat_section_id_fk",
           "tableFrom": "seat",
           "tableTo": "seat_section",
-          "columnsFrom": [
-            "section_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["section_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1246,12 +1188,8 @@
           "name": "seat_event_id_event_id_fk",
           "tableFrom": "seat",
           "tableTo": "event",
-          "columnsFrom": [
-            "event_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["event_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1261,11 +1199,7 @@
         "seat_section_row_number_unique": {
           "name": "seat_section_row_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "section_id",
-            "row_label",
-            "number"
-          ]
+          "columns": ["section_id", "row_label", "number"]
         }
       },
       "policies": {},
@@ -1363,12 +1297,8 @@
           "name": "seat_section_event_id_event_id_fk",
           "tableFrom": "seat_section",
           "tableTo": "event",
-          "columnsFrom": [
-            "event_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["event_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1551,12 +1481,8 @@
           "name": "ticket_order_id_order_id_fk",
           "tableFrom": "ticket",
           "tableTo": "order",
-          "columnsFrom": [
-            "order_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["order_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1564,12 +1490,8 @@
           "name": "ticket_event_id_event_id_fk",
           "tableFrom": "ticket",
           "tableTo": "event",
-          "columnsFrom": [
-            "event_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["event_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -1577,12 +1499,8 @@
           "name": "ticket_tier_id_ticket_tier_id_fk",
           "tableFrom": "ticket",
           "tableTo": "ticket_tier",
-          "columnsFrom": [
-            "tier_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tier_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -1590,12 +1508,8 @@
           "name": "ticket_seat_id_seat_id_fk",
           "tableFrom": "ticket",
           "tableTo": "seat",
-          "columnsFrom": [
-            "seat_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["seat_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -1603,12 +1517,8 @@
           "name": "ticket_used_by_id_user_id_fk",
           "tableFrom": "ticket",
           "tableTo": "user",
-          "columnsFrom": [
-            "used_by_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["used_by_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1618,9 +1528,7 @@
         "ticket_token_unique": {
           "name": "ticket_token_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "token"
-          ]
+          "columns": ["token"]
         }
       },
       "policies": {},
@@ -1729,12 +1637,8 @@
           "name": "ticket_tier_event_id_event_id_fk",
           "tableFrom": "ticket_tier",
           "tableTo": "event",
-          "columnsFrom": [
-            "event_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["event_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1847,12 +1751,8 @@
           "name": "account_user_id_user_id_fk",
           "tableFrom": "account",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1928,12 +1828,8 @@
           "name": "session_user_id_user_id_fk",
           "tableFrom": "session",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1943,9 +1839,7 @@
         "session_token_unique": {
           "name": "session_token_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "token"
-          ]
+          "columns": ["token"]
         }
       },
       "policies": {},
@@ -2059,12 +1953,8 @@
           "name": "user_role_id_fk",
           "tableFrom": "user",
           "tableTo": "role",
-          "columnsFrom": [
-            "role_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["role_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -2074,9 +1964,7 @@
         "user_email_unique": {
           "name": "user_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -2137,12 +2025,7 @@
     "public.event_status": {
       "name": "event_status",
       "schema": "public",
-      "values": [
-        "draft",
-        "published",
-        "ended",
-        "cancelled"
-      ]
+      "values": ["draft", "published", "ended", "cancelled"]
     },
     "public.order_status": {
       "name": "order_status",
@@ -2160,58 +2043,32 @@
     "public.refund_status": {
       "name": "refund_status",
       "schema": "public",
-      "values": [
-        "requested",
-        "approved",
-        "rejected",
-        "paid"
-      ]
+      "values": ["requested", "approved", "rejected", "paid"]
     },
     "public.row_label_style": {
       "name": "row_label_style",
       "schema": "public",
-      "values": [
-        "alpha",
-        "numeric"
-      ]
+      "values": ["alpha", "numeric"]
     },
     "public.scan_result": {
       "name": "scan_result",
       "schema": "public",
-      "values": [
-        "valid",
-        "already_used",
-        "wrong_event",
-        "void",
-        "not_found"
-      ]
+      "values": ["valid", "already_used", "wrong_event", "void", "not_found"]
     },
     "public.seat_status": {
       "name": "seat_status",
       "schema": "public",
-      "values": [
-        "available",
-        "held",
-        "sold",
-        "blocked"
-      ]
+      "values": ["available", "held", "sold", "blocked"]
     },
     "public.seating_mode": {
       "name": "seating_mode",
       "schema": "public",
-      "values": [
-        "ga",
-        "reserved"
-      ]
+      "values": ["ga", "reserved"]
     },
     "public.ticket_status": {
       "name": "ticket_status",
       "schema": "public",
-      "values": [
-        "active",
-        "used",
-        "void"
-      ]
+      "values": ["active", "used", "void"]
     }
   },
   "schemas": {},
