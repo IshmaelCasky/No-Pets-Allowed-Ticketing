@@ -122,8 +122,9 @@ export function RoleFormDialog({
       }}
     >
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
+      {/* Header and Save stay put; the long permission list scrolls between. */}
+      <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
+        <DialogHeader className="border-b px-6 pt-6 pr-12 pb-4">
           <DialogTitle>
             {mode === "create" ? "Create role" : "Edit role"}
           </DialogTitle>
@@ -131,27 +132,45 @@ export function RoleFormDialog({
             Choose the permissions this role grants.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={onSubmit} className="flex flex-col gap-4">
-          <Field>
-            <Label htmlFor="role-name">Name</Label>
-            <Input id="role-name" {...register("name")} />
-            <FieldError errors={[errors.name]} />
-          </Field>
-          <Field>
-            <Label htmlFor="role-description">Description</Label>
-            <Textarea id="role-description" {...register("description")} />
-            <FieldError errors={[errors.description]} />
-          </Field>
-          <Field>
-            <Label>Permissions</Label>
-            <PermissionChecklist
-              value={permissions}
-              onChange={(next) =>
-                setValue("permissions", next, { shouldDirty: true })
-              }
-            />
-          </Field>
-          <DialogFooter>
+        <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col">
+          <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-6 py-4">
+            <Field>
+              <Label htmlFor="role-name">Name</Label>
+              <Input id="role-name" {...register("name")} />
+              <FieldError errors={[errors.name]} />
+            </Field>
+            <Field>
+              <Label htmlFor="role-description">Description</Label>
+              <Textarea
+                id="role-description"
+                rows={2}
+                {...register("description")}
+              />
+              <FieldError errors={[errors.description]} />
+            </Field>
+            <Field>
+              <div className="flex items-center justify-between">
+                <Label>Permissions</Label>
+                <span className="text-muted-foreground text-xs">
+                  {permissions.length} selected
+                </span>
+              </div>
+              <PermissionChecklist
+                value={permissions}
+                onChange={(next) =>
+                  setValue("permissions", next, { shouldDirty: true })
+                }
+              />
+            </Field>
+          </div>
+          <DialogFooter className="border-t px-6 py-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </Button>
             <Button type="submit" disabled={pending}>
               {pending ? "Saving…" : "Save"}
             </Button>
