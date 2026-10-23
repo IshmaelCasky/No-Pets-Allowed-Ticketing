@@ -26,12 +26,7 @@ const NAV: NavItem[] = [
   {
     href: "/admin/transactions",
     label: "Transactions",
-    anyOf: [
-      "orders:read",
-      "orders:review",
-      "refunds:review",
-      "payment_methods:write",
-    ],
+    anyOf: ["orders:read", "orders:review", "refunds:review"],
   },
   { href: "/admin/scanner", label: "QR Scanner", anyOf: ["tickets:scan"] },
 ];

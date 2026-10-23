@@ -6,7 +6,7 @@ export default function TransactionsPage() {
     <div>
       <PageHeader
         title="Transactions"
-        description="Review payments, manage orders, process refunds, and configure payment options."
+        description="Manage orders and process refunds."
       />
       <TransactionsClient />
     </div>

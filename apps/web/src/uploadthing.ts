@@ -7,8 +7,8 @@ import {
 import type { UploadRouter } from "~/app/api/uploadthing/core";
 
 /**
- * Typed UploadThing client helpers, shared by admin + customer surfaces.
- * `customer-web` reuses these for the `paymentProof` route.
+ * Typed UploadThing client helpers, shared by admin surfaces
+ * (`eventPoster`, `refundProof`).
  */
 export const { useUploadThing, uploadFiles } =
   generateReactHelpers<UploadRouter>();
