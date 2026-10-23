@@ -56,6 +56,7 @@
     "HITPAY_API_KEY",
     "HITPAY_SALT",
     "HITPAY_API_URL",
+    "HITPAY_PAYMENT_METHODS",
     "TEST_DATABASE_URL",
     "PORT"
   ],

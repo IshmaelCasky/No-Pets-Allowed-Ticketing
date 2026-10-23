@@ -32,6 +32,23 @@ export interface CreatePaymentRequestArgs {
   name?: string;
   email?: string;
   currency?: string;
+  /** Online methods to offer (e.g. ["card","gcash"]). Omitting lets HitPay show
+   * all enabled methods, which can fall back to a POS/terminal screen. */
+  paymentMethods?: string[];
+}
+
+/**
+ * Payment methods to offer, from HITPAY_PAYMENT_METHODS (CSV, e.g. "card,gcash").
+ * Empty by default — HitPay then shows every method ENABLED on the account.
+ * Only set this once those methods are enabled in the HitPay dashboard,
+ * otherwise HitPay rejects an unavailable method with a 422.
+ */
+function configuredPaymentMethods(): string[] {
+  return (
+    process.env.HITPAY_PAYMENT_METHODS?.split(",")
+      .map((s) => s.trim())
+      .filter(Boolean) ?? []
+  );
 }
 
 export interface HitpayPayment {
@@ -60,6 +77,9 @@ export async function createPaymentRequest(
   body.set("reference_number", args.referenceNumber);
   body.set("redirect_url", args.redirectUrl);
   if (args.webhook) body.set("webhook", args.webhook);
+  for (const m of args.paymentMethods ?? configuredPaymentMethods()) {
+    body.append("payment_methods[]", m);
+  }
   if (args.name) body.set("name", args.name);
   if (args.email) body.set("email", args.email);
 
