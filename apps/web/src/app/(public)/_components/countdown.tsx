@@ -37,7 +37,7 @@ export function ShowCountdown({ target }: { target: string | Date }) {
   if (p.done) {
     return (
       <p className="text-[oklch(0.82_0.14_75)]">
-        The show is on. See you there.
+        The concert is on. See you there.
       </p>
     );
   }

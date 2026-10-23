@@ -123,7 +123,7 @@ export function EventForm({
         <FieldLabel htmlFor="slug">Slug</FieldLabel>
         <Input
           id="slug"
-          placeholder="my-show-2026"
+          placeholder="my-concert-2026"
           {...form.register("slug")}
         />
         <FieldError errors={[form.formState.errors.slug]} />

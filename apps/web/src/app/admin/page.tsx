@@ -34,7 +34,7 @@ export default async function DashboardPage() {
       value: formatCentavos(summary.approvedRevenue),
     },
     { label: "Check-ins today", value: String(summary.checkInsToday) },
-    { label: "Tickets sold (all events)", value: String(totalSold) },
+    { label: "Tickets sold (all concerts)", value: String(totalSold) },
   ];
 
   return (
@@ -57,13 +57,13 @@ export default async function DashboardPage() {
 
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle>Tickets sold per event</CardTitle>
+          <CardTitle>Tickets sold per concert</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Event</TableHead>
+                <TableHead>Concert</TableHead>
                 <TableHead className="text-right">Tickets sold</TableHead>
               </TableRow>
             </TableHeader>
@@ -74,7 +74,7 @@ export default async function DashboardPage() {
                     colSpan={2}
                     className="text-muted-foreground h-16 text-center"
                   >
-                    No events yet.
+                    No concerts yet.
                   </TableCell>
                 </TableRow>
               ) : (

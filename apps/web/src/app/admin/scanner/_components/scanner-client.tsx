@@ -168,10 +168,10 @@ export function ScannerClient() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-end gap-4">
         <div className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium">Event</span>
+          <span className="text-sm font-medium">Concert</span>
           <Select value={eventId} onValueChange={setEventId}>
             <SelectTrigger className="w-72">
-              <SelectValue placeholder="Select an event to scan" />
+              <SelectValue placeholder="Select a concert to scan" />
             </SelectTrigger>
             <SelectContent>
               {events.map((e) => (
@@ -197,7 +197,7 @@ export function ScannerClient() {
 
       {!eventId ? (
         <p className="text-muted-foreground text-sm">
-          Pick an event to start scanning.
+          Pick a concert to start scanning.
         </p>
       ) : (
         <div className="grid gap-6 lg:grid-cols-2">

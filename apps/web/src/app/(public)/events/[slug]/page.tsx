@@ -14,7 +14,7 @@ export async function generateMetadata({
   const { slug } = await params;
   const caller = await getCaller();
   const event = await caller.event.bySlug({ slug });
-  return { title: event ? `${event.title} · No Pets Allowed` : "Show" };
+  return { title: event ? `${event.title} · No Pets Allowed` : "Concert" };
 }
 
 export default async function EventDetailPage({
@@ -47,7 +47,7 @@ export default async function EventDetailPage({
         href="/events"
         className="text-sm text-[oklch(0.68_0.018_309)] hover:text-white"
       >
-        ← All shows
+        ← All concerts
       </Link>
 
       <div className="mt-6 grid gap-10 lg:grid-cols-[2fr_3fr]">
@@ -118,13 +118,23 @@ export default async function EventDetailPage({
                       key={t.id}
                       className="flex items-center justify-between px-5 py-4"
                     >
-                      <div>
-                        <p className="font-semibold">{t.name}</p>
-                        <p
-                          className={`text-sm ${soldOut ? "text-[oklch(0.72_0.19_25)]" : "text-[oklch(0.6_0.016_309)]"}`}
-                        >
-                          {soldOut ? "Sold out" : `${remaining} left`}
-                        </p>
+                      <div className="flex items-center gap-3">
+                        {t.imageUrl && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={t.imageUrl}
+                            alt={t.name}
+                            className="size-12 shrink-0 rounded-lg border border-[oklch(0.3_0.018_310)] object-cover"
+                          />
+                        )}
+                        <div>
+                          <p className="font-semibold">{t.name}</p>
+                          <p
+                            className={`text-sm ${soldOut ? "text-[oklch(0.72_0.19_25)]" : "text-[oklch(0.6_0.016_309)]"}`}
+                          >
+                            {soldOut ? "Sold out" : `${remaining} left`}
+                          </p>
+                        </div>
                       </div>
                       <span className="font-mono font-bold text-[oklch(0.82_0.14_75)]">
                         {formatCentavos(t.price)}
@@ -175,7 +185,7 @@ export default async function EventDetailPage({
             )}
             <p className="mt-3 text-xs text-[oklch(0.6_0.016_309)]">
               You’ll have 30 minutes to pay once you reserve. Refunds accepted
-              until {event.refundCutoffDays} days before the show.
+              until {event.refundCutoffDays} days before the concert.
             </p>
           </div>
         </div>

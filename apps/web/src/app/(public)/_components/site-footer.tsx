@@ -12,7 +12,7 @@ export function SiteFooter() {
         </div>
         <div className="flex gap-6 text-[oklch(0.72_0.012_309)]">
           <Link href="/events" className="hover:text-white">
-            Shows
+            Concerts
           </Link>
           <Link href="/#how-to-buy" className="hover:text-white">
             How to buy

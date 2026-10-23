@@ -5,7 +5,7 @@ export default function EventsPage() {
   return (
     <div>
       <PageHeader
-        title="Events"
+        title="Concerts"
         description="Create and manage concerts, ticket tiers, and seat maps"
       />
       <EventsClient />

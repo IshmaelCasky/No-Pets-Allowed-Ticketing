@@ -20,7 +20,7 @@ const NAV: NavItem[] = [
   { href: "/admin/audit", label: "Audit Logs", anyOf: ["audit:read"] },
   {
     href: "/admin/events",
-    label: "Events",
+    label: "Concerts",
     anyOf: ["events:read", "events:write"],
   },
   {

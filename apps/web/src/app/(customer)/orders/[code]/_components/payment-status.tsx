@@ -84,7 +84,7 @@ export function PaymentStatus({
       <p className="mt-6 rounded-xl border border-[oklch(0.3_0.018_310)] bg-[oklch(0.19_0.013_311)] p-4 text-sm text-[oklch(0.68_0.018_309)]">
         This order is {status}. Reserved seats and tickets have been released.{" "}
         <Link href="/events" className="text-[oklch(0.72_0.17_348)] underline">
-          Browse shows
+          Browse concerts
         </Link>
         .
       </p>
