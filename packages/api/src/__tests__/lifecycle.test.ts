@@ -1,6 +1,14 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-condition -- test fixtures freely assert on known-present rows */
 import { TRPCError } from "@trpc/server";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 import type { TestEnv } from "./helpers";
 import {
@@ -8,10 +16,27 @@ import {
   getTestEnv,
   hasTestDb,
   migrate,
+  payOrder,
   resetDb,
   seedRole,
   seedUser,
 } from "./helpers";
+
+// Payment runs through HitPay; stub the client so order.create succeeds without
+// hitting the gateway. Payment confirmation is simulated via payOrder(), which
+// calls the same fulfilment path the webhook uses.
+vi.mock("../hitpay", () => ({
+  hitpayConfigured: () => true,
+  createPaymentRequest: () =>
+    Promise.resolve({
+      id: "hp_test",
+      url: "https://pay.test/x",
+      status: "pending",
+    }),
+  getPaymentRequest: () =>
+    Promise.resolve({ id: "hp_test", status: "completed" }),
+  verifyWebhookSignature: () => true,
+}));
 
 /* -------------------------------------------------------------------------- */
 /*  Fixtures                                                                  */
@@ -21,7 +46,6 @@ interface Fixture {
   env: TestEnv;
   customerId: string;
   staffId: string;
-  methodId: string;
 }
 
 async function seedBase(env: TestEnv): Promise<Fixture> {
@@ -40,11 +64,7 @@ async function seedBase(env: TestEnv): Promise<Fixture> {
     name: "Sam Staff",
     roleId: staffRole,
   });
-  const [method] = await env.db
-    .insert(env.schema.paymentMethod)
-    .values({ label: "GCash", sortOrder: 0 })
-    .returning();
-  return { env, customerId, staffId, methodId: method!.id };
+  return { env, customerId, staffId };
 }
 
 async function createGaEvent(env: TestEnv, capacity: number, price = 50000) {
@@ -90,7 +110,6 @@ async function createReservedEvent(env: TestEnv) {
       sortOrder: 0,
     })
     .returning();
-  // Build the 4 seats manually (mirrors seat-map.createSection).
   const seats = [];
   for (let r = 0; r < 2; r++) {
     const rowLabel = String.fromCharCode(65 + r);
@@ -131,19 +150,17 @@ describe.runIf(hasTestDb)("router lifecycle + concurrency", () => {
   });
 
   it("GA: cannot oversell a tier under concurrent orders", async () => {
-    const f = await seedBase(env);
+    await seedBase(env);
     const { event, tier } = await createGaEvent(env, 3);
-    const buyer = await seedUser(env, { roleId: null });
-    const caller = await callerFor(env, buyer);
+    const caller = await callerFor(env, await seedUser(env, { roleId: null }));
 
-    const order = (seatQty: number) =>
+    const order = (qty: number) =>
       caller.order.create({
         mode: "ga",
         eventId: event.id,
-        items: [{ tierId: tier.id, quantity: seatQty }],
+        items: [{ tierId: tier.id, quantity: qty }],
       });
 
-    // Three buyers of 2 each → only one-and-a-half fit (capacity 3).
     const results = await Promise.allSettled([order(2), order(2)]);
     const ok = results.filter((r) => r.status === "fulfilled").length;
     const conflicts = results.filter(
@@ -158,7 +175,6 @@ describe.runIf(hasTestDb)("router lifecycle + concurrency", () => {
       .where(env.eq(env.schema.ticketTier.id, tier.id));
     expect(row!.reserved).toBe(2);
     expect(row!.reserved + row!.sold).toBeLessThanOrEqual(row!.capacity);
-    void f;
   });
 
   it("Reserved: two orders can't hold the same seat", async () => {
@@ -186,27 +202,18 @@ describe.runIf(hasTestDb)("router lifecycle + concurrency", () => {
     expect(conflict!.reason).toBeInstanceOf(TRPCError);
   });
 
-  it("approve generates tickets and marks inventory sold; double-approve is CONFLICT", async () => {
-    const f = await seedBase(env);
+  it("payment fulfilment generates tickets + marks inventory sold, and is idempotent", async () => {
+    await seedBase(env);
     const { event, tier } = await createGaEvent(env, 10);
-    const buyer = await seedUser(env);
-    const buyerCaller = await callerFor(env, buyer);
-    const staffCaller = await callerFor(env, f.staffId);
+    const buyerCaller = await callerFor(env, await seedUser(env));
 
-    const order = await buyerCaller.order.create({
+    const { order } = await buyerCaller.order.create({
       mode: "ga",
       eventId: event.id,
       items: [{ tierId: tier.id, quantity: 2 }],
     });
-    await buyerCaller.order.submitProof({
-      orderId: order.id,
-      paymentMethodId: f.methodId,
-      referenceNumber: "REF-1",
-      proofImageKey: "key-1",
-    });
 
-    const approved = await staffCaller.review.approve({ orderId: order.id });
-    expect(approved.status).toBe("approved");
+    await payOrder(env, order.id);
 
     const tickets = await env.db
       .select()
@@ -221,30 +228,27 @@ describe.runIf(hasTestDb)("router lifecycle + concurrency", () => {
     expect(row!.sold).toBe(2);
     expect(row!.reserved).toBe(0);
 
-    await expect(
-      staffCaller.review.approve({ orderId: order.id }),
-    ).rejects.toMatchObject({ code: "CONFLICT" });
+    // A second webhook/poll for the same order must not double-fulfil.
+    await payOrder(env, order.id);
+    const after = await env.db
+      .select()
+      .from(env.schema.ticket)
+      .where(env.eq(env.schema.ticket.orderId, order.id));
+    expect(after).toHaveLength(2);
   });
 
   it("scan: first scan is valid, second is already_used with who/when", async () => {
     const f = await seedBase(env);
     const { event, tier } = await createGaEvent(env, 10);
-    const buyer = await seedUser(env);
-    const buyerCaller = await callerFor(env, buyer);
+    const buyerCaller = await callerFor(env, await seedUser(env));
     const staffCaller = await callerFor(env, f.staffId);
 
-    const order = await buyerCaller.order.create({
+    const { order } = await buyerCaller.order.create({
       mode: "ga",
       eventId: event.id,
       items: [{ tierId: tier.id, quantity: 1 }],
     });
-    await buyerCaller.order.submitProof({
-      orderId: order.id,
-      paymentMethodId: f.methodId,
-      referenceNumber: "REF-2",
-      proofImageKey: "key-2",
-    });
-    await staffCaller.review.approve({ orderId: order.id });
+    await payOrder(env, order.id);
 
     const [t] = await env.db
       .select()
@@ -265,7 +269,6 @@ describe.runIf(hasTestDb)("router lifecycle + concurrency", () => {
     expect(second.usedByName).toBe("Sam Staff");
     expect(second.usedAt).toBeInstanceOf(Date);
 
-    // Every scan is logged.
     const logs = await env.db
       .select()
       .from(env.schema.scanLog)
@@ -285,20 +288,13 @@ describe.runIf(hasTestDb)("router lifecycle + concurrency", () => {
     });
     expect(notFound.result).toBe("not_found");
 
-    // Make a valid ticket for `other`, scan it against `event`.
     const buyerCaller = await callerFor(env, await seedUser(env));
-    const o = await buyerCaller.order.create({
+    const { order: o } = await buyerCaller.order.create({
       mode: "ga",
       eventId: other.event.id,
       items: [{ tierId: other.tier.id, quantity: 1 }],
     });
-    await buyerCaller.order.submitProof({
-      orderId: o.id,
-      paymentMethodId: f.methodId,
-      referenceNumber: "REF-3",
-      proofImageKey: "key-3",
-    });
-    await staffCaller.review.approve({ orderId: o.id });
+    await payOrder(env, o.id);
     const [t] = await env.db
       .select()
       .from(env.schema.ticket)
@@ -313,22 +309,29 @@ describe.runIf(hasTestDb)("router lifecycle + concurrency", () => {
 
   it("expiry releases held seats via releaseExpired", async () => {
     await seedBase(env);
+    process.env.CRON_SECRET = "test-cron";
     const { event, seats } = await createReservedEvent(env);
     const buyerCaller = await callerFor(env, await seedUser(env));
-    const anon = await callerFor(env, null);
+    const cronCaller = env.createCaller({
+      db: env.db,
+      session: null,
+      authApi: {} as never,
+      ip: null,
+      userAgent: null,
+      headers: new Headers({ authorization: "Bearer test-cron" }),
+    } as never);
 
-    const order = await buyerCaller.order.create({
+    const { order } = await buyerCaller.order.create({
       mode: "reserved",
       eventId: event.id,
       seatIds: [seats[0]!.id, seats[1]!.id],
     });
-    // Force the window closed.
     await env.db
       .update(env.schema.order)
       .set({ expiresAt: new Date(Date.now() - 1000) })
       .where(env.eq(env.schema.order.id, order.id));
 
-    const res = await anon.order.releaseExpired();
+    const res = await cronCaller.order.releaseExpired();
     expect(res.released).toBe(1);
 
     const freed = await env.db
@@ -344,52 +347,11 @@ describe.runIf(hasTestDb)("router lifecycle + concurrency", () => {
     expect(o!.status).toBe("expired");
   });
 
-  it("resubmit is allowed once, then blocked", async () => {
-    const f = await seedBase(env);
-    const { event, tier } = await createGaEvent(env, 10);
-    const buyerCaller = await callerFor(env, await seedUser(env));
-    const staffCaller = await callerFor(env, f.staffId);
-
-    const order = await buyerCaller.order.create({
-      mode: "ga",
-      eventId: event.id,
-      items: [{ tierId: tier.id, quantity: 1 }],
-    });
-    await buyerCaller.order.submitProof({
-      orderId: order.id,
-      paymentMethodId: f.methodId,
-      referenceNumber: "R1",
-      proofImageKey: "k1",
-    });
-    await staffCaller.review.reject({ orderId: order.id, reason: "blurry" });
-
-    // First re-submit OK.
-    await buyerCaller.order.submitProof({
-      orderId: order.id,
-      paymentMethodId: f.methodId,
-      referenceNumber: "R2",
-      proofImageKey: "k2",
-    });
-    await staffCaller.review.reject({ orderId: order.id, reason: "still bad" });
-
-    // Second re-submit blocked.
-    await expect(
-      buyerCaller.order.submitProof({
-        orderId: order.id,
-        paymentMethodId: f.methodId,
-        referenceNumber: "R3",
-        proofImageKey: "k3",
-      }),
-    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
-  });
-
   it("refund past the cutoff is rejected", async () => {
-    const f = await seedBase(env);
+    await seedBase(env);
     const { event, tier } = await createGaEvent(env, 10);
     const buyerCaller = await callerFor(env, await seedUser(env));
-    const staffCaller = await callerFor(env, f.staffId);
 
-    // Event starts tomorrow, cutoff 7 days → already past the window.
     await env.db
       .update(env.schema.event)
       .set({
@@ -398,18 +360,12 @@ describe.runIf(hasTestDb)("router lifecycle + concurrency", () => {
       })
       .where(env.eq(env.schema.event.id, event.id));
 
-    const order = await buyerCaller.order.create({
+    const { order } = await buyerCaller.order.create({
       mode: "ga",
       eventId: event.id,
       items: [{ tierId: tier.id, quantity: 1 }],
     });
-    await buyerCaller.order.submitProof({
-      orderId: order.id,
-      paymentMethodId: f.methodId,
-      referenceNumber: "RR1",
-      proofImageKey: "kk1",
-    });
-    await staffCaller.review.approve({ orderId: order.id });
+    await payOrder(env, order.id);
 
     await expect(
       buyerCaller.refund.request({
@@ -428,18 +384,12 @@ describe.runIf(hasTestDb)("router lifecycle + concurrency", () => {
     const buyerCaller = await callerFor(env, await seedUser(env));
     const staffCaller = await callerFor(env, f.staffId);
 
-    const order = await buyerCaller.order.create({
+    const { order } = await buyerCaller.order.create({
       mode: "reserved",
       eventId: event.id,
       seatIds: [seats[0]!.id],
     });
-    await buyerCaller.order.submitProof({
-      orderId: order.id,
-      paymentMethodId: f.methodId,
-      referenceNumber: "RF1",
-      proofImageKey: "pf1",
-    });
-    await staffCaller.review.approve({ orderId: order.id });
+    await payOrder(env, order.id);
 
     const req = await buyerCaller.refund.request({
       orderId: order.id,
@@ -475,11 +425,15 @@ describe.runIf(hasTestDb)("router lifecycle + concurrency", () => {
     expect(o!.status).toBe("refunded");
   });
 
-  it("permission denial: a customer cannot review", async () => {
+  it("permission denial: a customer cannot see the admin order list", async () => {
     const f = await seedBase(env);
     const customerCaller = await callerFor(env, f.customerId);
     await expect(
-      customerCaller.review.queue({ page: 1, pageSize: 20, sortDir: "desc" }),
+      customerCaller.order.adminList({
+        page: 1,
+        pageSize: 20,
+        sortDir: "desc",
+      }),
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 });

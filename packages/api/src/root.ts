@@ -3,9 +3,7 @@ import { authRouter } from "./router/auth";
 import { dashboardRouter } from "./router/dashboard";
 import { eventRouter } from "./router/event";
 import { orderRouter } from "./router/order";
-import { paymentMethodRouter } from "./router/payment-method";
 import { refundRouter } from "./router/refund";
-import { reviewRouter } from "./router/review";
 import { roleRouter } from "./router/role";
 import { scanRouter } from "./router/scan";
 import { seatMapRouter } from "./router/seat-map";
@@ -18,11 +16,9 @@ export const appRouter = createTRPCRouter({
   event: eventRouter,
   seatMap: seatMapRouter,
   order: orderRouter,
-  review: reviewRouter,
   refund: refundRouter,
   ticket: ticketRouter,
   scan: scanRouter,
-  paymentMethod: paymentMethodRouter,
   user: userRouter,
   role: roleRouter,
   audit: auditRouter,

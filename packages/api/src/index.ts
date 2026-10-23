@@ -30,3 +30,4 @@ export type { AppRouter, RouterInputs, RouterOutputs };
 export { audit } from "./audit";
 export type { AuditContext, AuditEntry } from "./audit";
 export type { Paginated } from "./stub";
+export { handleHitpayWebhook } from "./webhook";

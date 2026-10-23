@@ -63,10 +63,18 @@ export async function resetDb(env: TestEnv): Promise<void> {
   await env.db.execute(env.sql`
     truncate table
       "scan_log", "audit_log", "ticket", "order_item", "refund_request",
-      "order", "seat", "seat_section", "ticket_tier", "payment_method",
+      "order", "seat", "seat_section", "ticket_tier",
       "event", "session", "account", "user", "role"
     restart identity cascade
   `);
+}
+
+/** Simulate a completed HitPay payment: fulfil the order (→ approved + tickets). */
+export async function payOrder(env: TestEnv, orderId: string): Promise<void> {
+  const { fulfillPaidOrderTx } = await import("../fulfill");
+  await env.db.transaction((tx: Any) =>
+    fulfillPaidOrderTx(tx, orderId, "completed"),
+  );
 }
 
 /** Seed a role with the given permission keys; returns the role id. */
