@@ -55,17 +55,17 @@ export function ClaimAccount({
 
   if (status.isLoading) {
     return (
-      <p className="mt-6 text-sm text-[oklch(0.68_0.018_309)]">Checking…</p>
+      <p className="mt-6 text-sm text-[oklch(0.68_0.018_250)]">Checking…</p>
     );
   }
 
   if (claimed) {
     return (
-      <div className="mt-6 rounded-xl border border-[oklch(0.3_0.02_310)] bg-[oklch(0.2_0.02_310)] p-5">
+      <div className="mt-6 rounded-xl border border-[oklch(0.3_0.02_250)] bg-[oklch(0.2_0.02_250)] p-5">
         <p className="text-sm font-semibold text-white">
           The {label} account has already been set up.
         </p>
-        <p className="mt-1 text-sm text-[oklch(0.68_0.018_309)]">
+        <p className="mt-1 text-sm text-[oklch(0.68_0.018_250)]">
           This page is now locked. Use the sign-in page instead.
         </p>
       </div>
@@ -108,7 +108,7 @@ export function ClaimAccount({
       <button
         type="submit"
         disabled={claim.isPending}
-        className="w-full rounded-full bg-[oklch(0.62_0.21_350)] px-6 py-2.5 text-sm font-bold tracking-wide text-white transition-colors hover:bg-[oklch(0.68_0.2_349)] disabled:opacity-50"
+        className="w-full rounded-full bg-[oklch(0.62_0.21_250)] px-6 py-2.5 text-sm font-bold tracking-wide text-white transition-colors hover:bg-[oklch(0.68_0.2_250)] disabled:opacity-50"
       >
         {claim.isPending ? "Creating…" : `Create ${label} account`}
       </button>

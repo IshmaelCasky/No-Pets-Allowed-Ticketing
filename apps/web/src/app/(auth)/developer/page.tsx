@@ -13,7 +13,7 @@ export default function DeveloperPage() {
       <h1 className="text-2xl font-black tracking-tight uppercase">
         Developer setup
       </h1>
-      <p className="mt-1 text-sm text-[oklch(0.68_0.018_309)]">
+      <p className="mt-1 text-sm text-[oklch(0.68_0.018_250)]">
         One-time setup for the developer. Create the Developer account (full
         access). This page locks permanently once the account exists.
       </p>

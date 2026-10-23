@@ -60,7 +60,7 @@ function SectionGrid({
     <View className="gap-1">
       <View className="flex-row items-center gap-2">
         <View
-          style={{ backgroundColor: section.color ?? "#c03484" }}
+          style={{ backgroundColor: section.color ?? "#2f7de6" }}
           className="h-3 w-3 rounded-full"
         />
         <Text className="text-foreground font-semibold">
@@ -82,7 +82,7 @@ function SectionGrid({
         {rows.map(([, rowSeats], ri) =>
           rowSeats.map((seat, ci) => {
             const isSelected = selected.has(seat.id);
-            const fill = isSelected ? "#c03484" : SEAT_COLOR[seat.status];
+            const fill = isSelected ? "#2f7de6" : SEAT_COLOR[seat.status];
             const disabled = seat.status !== "available";
             return (
               <Rect
@@ -107,7 +107,7 @@ function SectionGrid({
 function Legend() {
   const items: { label: string; color: string }[] = [
     { label: "Available", color: "#22c55e" },
-    { label: "Selected", color: "#c03484" },
+    { label: "Selected", color: "#2f7de6" },
     { label: "Taken", color: "#eab308" },
     { label: "Sold", color: "#6b7280" },
   ];

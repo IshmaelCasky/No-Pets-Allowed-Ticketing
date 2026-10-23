@@ -77,7 +77,7 @@ export default function OrdersScreen() {
       renderItem={({ item }) => (
         <OrderCard
           order={item}
-          eventTitle={titleById.get(item.eventId) ?? "Event"}
+          eventTitle={titleById.get(item.eventId) ?? "Concert"}
         />
       )}
     />

@@ -29,7 +29,7 @@ export function ConcertChooser({
         <RefreshControl
           refreshing={concerts.isRefetching}
           onRefresh={() => void concerts.refetch()}
-          tintColor="#c03484"
+          tintColor="#2f7de6"
         />
       }
       ListHeaderComponent={

@@ -282,7 +282,7 @@ function RefundDetail({ id }: { id: string }) {
         <RefreshControl
           refreshing={refundQ.isRefetching}
           onRefresh={() => void refundQ.refetch()}
-          tintColor="#c03484"
+          tintColor="#2f7de6"
         />
       }
     >

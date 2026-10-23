@@ -244,7 +244,7 @@ function OrderDetail({ code }: { code: string }) {
         <RefreshControl
           refreshing={orderQ.isRefetching}
           onRefresh={() => void orderQ.refetch()}
-          tintColor="#c03484"
+          tintColor="#2f7de6"
         />
       }
     >

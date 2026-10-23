@@ -27,7 +27,7 @@ export default async function OrderPage({
     <div className="mx-auto max-w-3xl px-5 py-12">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-[oklch(0.68_0.018_309)]">Order</p>
+          <p className="text-sm text-[oklch(0.68_0.018_250)]">Order</p>
           <h1 className="font-mono text-3xl font-black tracking-tight">
             {order.code}
           </h1>
@@ -35,9 +35,9 @@ export default async function OrderPage({
         <StatusChip kind="order" status={order.status} />
       </div>
 
-      <div className="mt-4 rounded-xl border border-[oklch(0.3_0.018_310)] bg-[oklch(0.19_0.013_311)] p-5">
+      <div className="mt-4 rounded-xl border border-[oklch(0.3_0.018_250)] bg-[oklch(0.19_0.013_250)] p-5">
         <div className="flex items-center justify-between">
-          <span className="text-[oklch(0.68_0.018_309)]">Amount</span>
+          <span className="text-[oklch(0.68_0.018_250)]">Amount</span>
           <span className="font-mono text-xl font-black text-[oklch(0.82_0.14_75)]">
             {formatCentavos(order.totalAmount)}
           </span>

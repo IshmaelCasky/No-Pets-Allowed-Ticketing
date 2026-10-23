@@ -122,7 +122,7 @@ export function ToggleRow({
         value={value}
         onValueChange={onChange}
         disabled={disabled}
-        trackColor={{ true: "#c03484" }}
+        trackColor={{ true: "#2f7de6" }}
       />
     </Pressable>
   );

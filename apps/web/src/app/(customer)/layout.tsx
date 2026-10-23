@@ -26,7 +26,7 @@ export default async function CustomerLayout(props: {
   }
 
   return (
-    <div className="dark flex min-h-screen flex-col bg-[oklch(0.16_0.012_312)] text-[oklch(0.97_0.006_308)]">
+    <div className="dark flex min-h-screen flex-col bg-[oklch(0.16_0.012_250)] text-[oklch(0.97_0.006_250)]">
       <SiteNav />
       <main className="flex-1">{props.children}</main>
       <SiteFooter />

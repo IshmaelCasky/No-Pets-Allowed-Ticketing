@@ -58,13 +58,13 @@ export default async function MyTicketsPage() {
       </h1>
 
       {!hasAny ? (
-        <div className="mt-10 rounded-xl border border-[oklch(0.3_0.018_310)] bg-[oklch(0.19_0.013_311)] p-10 text-center">
-          <p className="text-[oklch(0.68_0.018_309)]">
+        <div className="mt-10 rounded-xl border border-[oklch(0.3_0.018_250)] bg-[oklch(0.19_0.013_250)] p-10 text-center">
+          <p className="text-[oklch(0.68_0.018_250)]">
             You don’t have any tickets yet.
           </p>
           <Link
             href="/events"
-            className="mt-4 inline-flex rounded-full bg-[oklch(0.62_0.21_350)] px-6 py-2.5 text-sm font-bold text-white hover:bg-[oklch(0.68_0.2_349)]"
+            className="mt-4 inline-flex rounded-full bg-[oklch(0.62_0.21_250)] px-6 py-2.5 text-sm font-bold text-white hover:bg-[oklch(0.68_0.2_250)]"
           >
             Browse concerts
           </Link>
@@ -76,7 +76,7 @@ export default async function MyTicketsPage() {
             if (list.length === 0) return null;
             return (
               <section key={g.key}>
-                <h2 className="mb-4 text-sm font-semibold tracking-widest text-[oklch(0.68_0.018_309)] uppercase">
+                <h2 className="mb-4 text-sm font-semibold tracking-widest text-[oklch(0.68_0.018_250)] uppercase">
                   {g.title} · {list.length}
                 </h2>
                 <ul className="space-y-3">
@@ -84,7 +84,7 @@ export default async function MyTicketsPage() {
                     <li key={t.id}>
                       <Link
                         href={`/tickets/${t.id}`}
-                        className="flex items-center justify-between rounded-xl border border-[oklch(0.3_0.018_310)] bg-[oklch(0.19_0.013_311)] p-5 transition-colors hover:border-[oklch(0.62_0.21_350)]"
+                        className="flex items-center justify-between rounded-xl border border-[oklch(0.3_0.018_250)] bg-[oklch(0.19_0.013_250)] p-5 transition-colors hover:border-[oklch(0.62_0.21_250)]"
                       >
                         <div>
                           <p className="font-bold">
@@ -92,18 +92,18 @@ export default async function MyTicketsPage() {
                               orderByEvent.get(t.eventId) ??
                               "Concert"}
                           </p>
-                          <p className="text-sm text-[oklch(0.68_0.018_309)]">
+                          <p className="text-sm text-[oklch(0.68_0.018_250)]">
                             {t.seatId
                               ? (seatLabel.get(t.seatId) ?? "Reserved seat")
                               : "General admission"}
                           </p>
                           {t.holderName && (
-                            <p className="text-xs text-[oklch(0.6_0.016_309)]">
+                            <p className="text-xs text-[oklch(0.6_0.016_250)]">
                               {t.holderName}
                             </p>
                           )}
                           {t.status === "used" && t.usedAt && (
-                            <p className="text-xs text-[oklch(0.6_0.016_309)]">
+                            <p className="text-xs text-[oklch(0.6_0.016_250)]">
                               Checked in {formatManila(t.usedAt)}
                             </p>
                           )}

@@ -10,17 +10,17 @@ export default function LoginPage() {
   return (
     <div>
       <h1 className="text-2xl font-black tracking-tight uppercase">Sign in</h1>
-      <p className="mt-1 text-sm text-[oklch(0.68_0.018_309)]">
+      <p className="mt-1 text-sm text-[oklch(0.68_0.018_250)]">
         Welcome back. Your tickets are waiting.
       </p>
       <Suspense>
         <LoginForm />
       </Suspense>
-      <p className="mt-6 text-center text-sm text-[oklch(0.68_0.018_309)]">
+      <p className="mt-6 text-center text-sm text-[oklch(0.68_0.018_250)]">
         New here?{" "}
         <Link
           href="/signup"
-          className="font-semibold text-[oklch(0.72_0.17_348)] hover:underline"
+          className="font-semibold text-[oklch(0.72_0.17_250)] hover:underline"
         >
           Create an account
         </Link>

@@ -148,7 +148,7 @@ export function ChoiceRow<T extends string>({
 
 const SWATCHES = [
   "#6366f1",
-  "#c03484",
+  "#2f7de6",
   "#ef4444",
   "#f97316",
   "#eab308",

@@ -120,7 +120,7 @@ export function StatusBadge({ status }: { status: OrderStatus }) {
 export function Loading({ label }: { label?: string }) {
   return (
     <View className="flex-1 items-center justify-center gap-2 p-8">
-      <ActivityIndicator color="#c03484" size="large" />
+      <ActivityIndicator color="#2f7de6" size="large" />
       {label ? <Text className="text-muted-foreground">{label}</Text> : null}
     </View>
   );

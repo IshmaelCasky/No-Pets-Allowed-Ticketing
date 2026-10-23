@@ -10,7 +10,7 @@ import { formatCentavos } from "~/lib/format";
 import { useTRPC } from "~/trpc/react";
 
 /** Fallback palette when a section has no color set. */
-const FALLBACK = "oklch(0.62 0.21 350)";
+const FALLBACK = "oklch(0.62 0.21 250)";
 
 export function ReservedCheckout({
   eventId,
@@ -80,11 +80,11 @@ export function ReservedCheckout({
   }, [selected, data?.seats, sectionById]);
 
   if (isLoading) {
-    return <p className="text-[oklch(0.68_0.018_309)]">Loading seat map…</p>;
+    return <p className="text-[oklch(0.68_0.018_250)]">Loading seat map…</p>;
   }
   if (!data || data.sections.length === 0) {
     return (
-      <p className="text-[oklch(0.68_0.018_309)]">
+      <p className="text-[oklch(0.68_0.018_250)]">
         The seat map for this concert isn’t ready yet.
       </p>
     );
@@ -120,11 +120,11 @@ export function ReservedCheckout({
       <div>
         <Legend />
         <div className="mt-4 flex items-center gap-2">
-          <span className="text-xs text-[oklch(0.6_0.016_309)]">Zoom</span>
+          <span className="text-xs text-[oklch(0.6_0.016_250)]">Zoom</span>
           <button
             type="button"
             onClick={() => setZoom((z) => Math.max(0.5, z - 0.25))}
-            className="size-7 rounded border border-[oklch(0.35_0.02_310)] text-sm font-bold"
+            className="size-7 rounded border border-[oklch(0.35_0.02_250)] text-sm font-bold"
             aria-label="Zoom out"
           >
             −
@@ -132,16 +132,16 @@ export function ReservedCheckout({
           <button
             type="button"
             onClick={() => setZoom((z) => Math.min(2, z + 0.25))}
-            className="size-7 rounded border border-[oklch(0.35_0.02_310)] text-sm font-bold"
+            className="size-7 rounded border border-[oklch(0.35_0.02_250)] text-sm font-bold"
             aria-label="Zoom in"
           >
             +
           </button>
         </div>
 
-        <div className="mt-2 overflow-auto rounded-xl border border-[oklch(0.3_0.018_310)] bg-[oklch(0.17_0.012_312)] p-4">
+        <div className="mt-2 overflow-auto rounded-xl border border-[oklch(0.3_0.018_250)] bg-[oklch(0.17_0.012_250)] p-4">
           <div
-            className="mb-6 rounded bg-[oklch(0.3_0.018_310)] py-1.5 text-center text-xs tracking-widest text-[oklch(0.72_0.012_309)] uppercase"
+            className="mb-6 rounded bg-[oklch(0.3_0.018_250)] py-1.5 text-center text-xs tracking-widest text-[oklch(0.72_0.012_250)] uppercase"
             style={{ width: `${100 * zoom}%`, minWidth: "100%" }}
           >
             Stage
@@ -175,7 +175,7 @@ export function ReservedCheckout({
                   <div className="space-y-1.5">
                     {rows.map(([rowLabel, rowSeats]) => (
                       <div key={rowLabel} className="flex items-center gap-1.5">
-                        <span className="w-6 shrink-0 text-right font-mono text-[11px] text-[oklch(0.55_0.014_309)]">
+                        <span className="w-6 shrink-0 text-right font-mono text-[11px] text-[oklch(0.55_0.014_250)]">
                           {rowLabel}
                         </span>
                         <div className="flex flex-wrap gap-1.5">
@@ -199,12 +199,12 @@ export function ReservedCheckout({
         </div>
       </div>
 
-      <aside className="h-fit rounded-xl border border-[oklch(0.3_0.018_310)] bg-[oklch(0.19_0.013_311)] p-6">
-        <h2 className="text-sm font-semibold tracking-widest text-[oklch(0.68_0.018_309)] uppercase">
+      <aside className="h-fit rounded-xl border border-[oklch(0.3_0.018_250)] bg-[oklch(0.19_0.013_250)] p-6">
+        <h2 className="text-sm font-semibold tracking-widest text-[oklch(0.68_0.018_250)] uppercase">
           Your seats
         </h2>
         {selected.size === 0 ? (
-          <p className="mt-3 text-sm text-[oklch(0.6_0.016_309)]">
+          <p className="mt-3 text-sm text-[oklch(0.6_0.016_250)]">
             Tap seats on the map to select them.
           </p>
         ) : (
@@ -224,7 +224,7 @@ export function ReservedCheckout({
             })}
           </ul>
         )}
-        <div className="mt-4 flex items-center justify-between border-t border-[oklch(0.3_0.018_310)] pt-4">
+        <div className="mt-4 flex items-center justify-between border-t border-[oklch(0.3_0.018_250)] pt-4">
           <span className="font-semibold">Total</span>
           <span className="font-mono text-lg font-black text-[oklch(0.82_0.14_75)]">
             {formatCentavos(total)}
@@ -234,11 +234,11 @@ export function ReservedCheckout({
           type="button"
           onClick={submit}
           disabled={createOrder.isPending || selected.size === 0}
-          className="mt-6 w-full rounded-full bg-[oklch(0.62_0.21_350)] px-6 py-3 text-sm font-bold tracking-wide text-white transition-colors hover:bg-[oklch(0.68_0.2_349)] disabled:opacity-50"
+          className="mt-6 w-full rounded-full bg-[oklch(0.62_0.21_250)] px-6 py-3 text-sm font-bold tracking-wide text-white transition-colors hover:bg-[oklch(0.68_0.2_250)] disabled:opacity-50"
         >
           {createOrder.isPending ? "Reserving…" : "Reserve & pay"}
         </button>
-        <p className="mt-3 text-xs text-[oklch(0.6_0.016_309)]">
+        <p className="mt-3 text-xs text-[oklch(0.6_0.016_250)]">
           Up to {maxPerOrder} seats. We’ll hold them 30 minutes while you pay.
         </p>
       </aside>
@@ -277,10 +277,10 @@ function SeatButton({
         selected
           ? "text-white"
           : available
-            ? "bg-transparent text-[oklch(0.72_0.012_309)] hover:bg-[oklch(0.25_0.015_311)]"
+            ? "bg-transparent text-[oklch(0.72_0.012_250)] hover:bg-[oklch(0.25_0.015_250)]"
             : seat.status === "blocked"
-              ? "cursor-not-allowed border-[oklch(0.3_0.018_310)] bg-[oklch(0.22_0.014_311)] text-transparent"
-              : "cursor-not-allowed border-[oklch(0.3_0.018_310)] bg-[oklch(0.28_0.016_311)] text-[oklch(0.45_0.014_309)] line-through"
+              ? "cursor-not-allowed border-[oklch(0.3_0.018_250)] bg-[oklch(0.22_0.014_250)] text-transparent"
+              : "cursor-not-allowed border-[oklch(0.3_0.018_250)] bg-[oklch(0.28_0.016_250)] text-[oklch(0.45_0.014_250)] line-through"
       }`}
     >
       {seat.number}
@@ -290,24 +290,24 @@ function SeatButton({
 
 function Legend() {
   const items = [
-    { label: "Available", className: "border border-[oklch(0.62_0.21_350)]" },
+    { label: "Available", className: "border border-[oklch(0.62_0.21_250)]" },
     {
       label: "Selected",
-      className: "bg-[oklch(0.62_0.21_350)]",
+      className: "bg-[oklch(0.62_0.21_250)]",
     },
     {
       label: "Taken",
       className:
-        "bg-[oklch(0.28_0.016_311)] border border-[oklch(0.3_0.018_310)]",
+        "bg-[oklch(0.28_0.016_250)] border border-[oklch(0.3_0.018_250)]",
     },
     {
       label: "Blocked",
       className:
-        "bg-[oklch(0.22_0.014_311)] border border-[oklch(0.3_0.018_310)]",
+        "bg-[oklch(0.22_0.014_250)] border border-[oklch(0.3_0.018_250)]",
     },
   ];
   return (
-    <div className="flex flex-wrap gap-4 text-xs text-[oklch(0.68_0.018_309)]">
+    <div className="flex flex-wrap gap-4 text-xs text-[oklch(0.68_0.018_250)]">
       {items.map((i) => (
         <span key={i.label} className="flex items-center gap-1.5">
           <span className={`size-4 rounded-[4px] ${i.className}`} />

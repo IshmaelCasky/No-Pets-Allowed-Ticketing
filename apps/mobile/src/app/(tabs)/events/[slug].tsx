@@ -22,8 +22,8 @@ export default function EventDetail() {
     enabled: !!event && event.seatingMode === "reserved",
   });
 
-  if (eventQ.isLoading) return <Loading label="Loading show…" />;
-  if (!event) return <Empty title="Show not found" />;
+  if (eventQ.isLoading) return <Loading label="Loading concert…" />;
+  if (!event) return <Empty title="Concert not found" />;
 
   return (
     <ScrollView contentContainerClassName="p-4 gap-4 pb-28">
@@ -65,14 +65,26 @@ export default function EventDetail() {
           {tiersQ.data?.map((t) => {
             const remaining = t.capacity - t.reserved - t.sold;
             return (
-              <Card key={t.id} className="flex-row justify-between">
-                <View>
-                  <Text className="text-foreground font-semibold">
-                    {t.name}
-                  </Text>
-                  <Text className="text-muted-foreground text-sm">
-                    {remaining > 0 ? `${remaining} left` : "Sold out"}
-                  </Text>
+              <Card
+                key={t.id}
+                className="flex-row items-center justify-between"
+              >
+                <View className="flex-1 flex-row items-center gap-3">
+                  {t.imageUrl ? (
+                    <Image
+                      source={{ uri: t.imageUrl }}
+                      className="h-12 w-12 rounded-lg"
+                      resizeMode="cover"
+                    />
+                  ) : null}
+                  <View className="flex-1">
+                    <Text className="text-foreground font-semibold">
+                      {t.name}
+                    </Text>
+                    <Text className="text-muted-foreground text-sm">
+                      {remaining > 0 ? `${remaining} left` : "Sold out"}
+                    </Text>
+                  </View>
                 </View>
                 <Text className="text-primary font-bold">
                   {formatCentavos(t.price)}
@@ -101,7 +113,7 @@ export default function EventDetail() {
           Reserve your {event.seatingMode === "ga" ? "tickets" : "seats"}, pay
           via the posted QR within the 30-minute window, upload your receipt,
           and get your QR ticket once staff approve it. Refunds can be requested
-          up to {event.refundCutoffDays} days before the show.
+          up to {event.refundCutoffDays} days before the concert.
         </Text>
       </Card>
 

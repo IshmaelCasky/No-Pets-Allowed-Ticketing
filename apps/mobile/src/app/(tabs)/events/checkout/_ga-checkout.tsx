@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Image, Pressable, ScrollView, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -99,8 +99,19 @@ export function GaCheckout({ event }: { event: NonNullable<Event> }) {
         );
         return (
           <Card key={t.id} className="gap-2">
-            <View className="flex-row justify-between">
-              <Text className="text-foreground font-semibold">{t.name}</Text>
+            <View className="flex-row items-center justify-between">
+              <View className="flex-1 flex-row items-center gap-3">
+                {t.imageUrl ? (
+                  <Image
+                    source={{ uri: t.imageUrl }}
+                    className="h-12 w-12 rounded-lg"
+                    resizeMode="cover"
+                  />
+                ) : null}
+                <Text className="text-foreground flex-1 font-semibold">
+                  {t.name}
+                </Text>
+              </View>
               <Text className="text-primary font-bold">
                 {formatCentavos(t.price)}
               </Text>

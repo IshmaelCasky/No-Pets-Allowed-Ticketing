@@ -221,7 +221,7 @@ function ConcertDetail({ id }: { id: string }) {
         <RefreshControl
           refreshing={refreshing}
           onRefresh={() => void onRefresh()}
-          tintColor="#c03484"
+          tintColor="#2f7de6"
         />
       }
     >

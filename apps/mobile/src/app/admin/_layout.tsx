@@ -28,7 +28,7 @@ export default function AdminLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#c03484",
+        tabBarActiveTintColor: "#2f7de6",
       }}
     >
       <Tabs.Screen name="index" options={{ href: null }} />

@@ -16,12 +16,12 @@ export default async function EventsPage() {
       <h1 className="text-4xl font-black tracking-tight uppercase sm:text-5xl">
         All concerts
       </h1>
-      <p className="mt-3 text-[oklch(0.78_0.012_309)]">
+      <p className="mt-3 text-[oklch(0.78_0.012_250)]">
         Every upcoming No Pets Allowed night. Tickets are limited.
       </p>
 
       {events.length === 0 ? (
-        <div className="mt-12 rounded-xl border border-[oklch(0.3_0.018_310)] bg-[oklch(0.19_0.013_311)] p-10 text-center text-[oklch(0.68_0.018_309)]">
+        <div className="mt-12 rounded-xl border border-[oklch(0.3_0.018_250)] bg-[oklch(0.19_0.013_250)] p-10 text-center text-[oklch(0.68_0.018_250)]">
           No concerts announced yet. Check back soon.
         </div>
       ) : (

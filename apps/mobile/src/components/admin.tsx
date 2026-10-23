@@ -281,7 +281,7 @@ export function ListFooter({
   if (loading) {
     return (
       <View className="py-4">
-        <ActivityIndicator color="#c03484" />
+        <ActivityIndicator color="#2f7de6" />
       </View>
     );
   }

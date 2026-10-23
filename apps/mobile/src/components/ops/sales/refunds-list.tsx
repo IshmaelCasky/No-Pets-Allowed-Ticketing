@@ -74,7 +74,7 @@ export function RefundsList() {
             <RefreshControl
               refreshing={list.isRefetching && !list.isFetchingNextPage}
               onRefresh={() => void list.refetch()}
-              tintColor="#c03484"
+              tintColor="#2f7de6"
             />
           }
           ListEmptyComponent={

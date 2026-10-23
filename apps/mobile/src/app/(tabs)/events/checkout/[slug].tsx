@@ -12,7 +12,7 @@ export default function Checkout() {
   const event = eventQ.data;
 
   if (eventQ.isLoading) return <Loading />;
-  if (!event) return <Empty title="Show not found" />;
+  if (!event) return <Empty title="Concert not found" />;
 
   return (
     <>

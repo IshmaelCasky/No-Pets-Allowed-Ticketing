@@ -39,7 +39,7 @@ function Dashboard() {
         <RefreshControl
           refreshing={summary.isRefetching}
           onRefresh={() => void summary.refetch()}
-          tintColor="#c03484"
+          tintColor="#2f7de6"
         />
       }
       ListHeaderComponent={
