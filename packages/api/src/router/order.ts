@@ -211,7 +211,11 @@ export const orderRouter = {
           amount: created.totalAmount,
           referenceNumber: created.code,
           redirectUrl: `${base}/orders/${created.code}`,
-          webhook: `${base}/api/webhooks/hitpay`,
+          // HitPay rejects non-public (localhost) webhooks. In local dev the
+          // return page's syncPayment poll reconciles instead.
+          webhook: base.startsWith("https://")
+            ? `${base}/api/webhooks/hitpay`
+            : undefined,
           name: ctx.session.user.name,
           email: ctx.session.user.email,
         });

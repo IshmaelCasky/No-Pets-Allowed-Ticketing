@@ -26,7 +26,9 @@ export interface CreatePaymentRequestArgs {
   amount: number;
   referenceNumber: string;
   redirectUrl: string;
-  webhook: string;
+  /** Public HTTPS callback. Omit in local dev (HitPay rejects localhost); the
+   * return page's syncPayment poll then reconciles the result. */
+  webhook?: string;
   name?: string;
   email?: string;
   currency?: string;
@@ -57,7 +59,7 @@ export async function createPaymentRequest(
   body.set("currency", args.currency ?? "PHP");
   body.set("reference_number", args.referenceNumber);
   body.set("redirect_url", args.redirectUrl);
-  body.set("webhook", args.webhook);
+  if (args.webhook) body.set("webhook", args.webhook);
   if (args.name) body.set("name", args.name);
   if (args.email) body.set("email", args.email);
 
