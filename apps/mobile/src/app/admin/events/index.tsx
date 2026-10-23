@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   FlatList,
   Image,
@@ -32,9 +32,7 @@ import { usePermissions } from "~/utils/use-permissions";
 
 type Concert = RouterOutputs["event"]["list"]["items"][number];
 
-// `event.list` has no status filter, so status chips filter loaded rows on the
-// client; a larger page keeps the filtered list useful.
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 30;
 
 function useDebounced<T>(value: T, ms: number): T {
   const [v, setV] = useState(value);
@@ -100,25 +98,13 @@ function ConcertsList() {
   const [status, setStatus] = useState<EventStatus | undefined>();
   const debounced = useDebounced(search.trim(), 300);
 
-  const input = { search: debounced || undefined, pageSize: PAGE_SIZE };
+  const input = { search: debounced || undefined, status, pageSize: PAGE_SIZE };
   const list = usePagedList<Concert, RouterOutputs["event"]["list"]>(
     [...trpc.event.list.pathKey(), input],
     (page) => trpcClient.event.list.query({ ...input, page }),
   );
 
-  const rows = useMemo(
-    () => (status ? list.items.filter((e) => e.status === status) : list.items),
-    [list.items, status],
-  );
-
-  // A status filter can leave few loaded matches; keep pulling pages until
-  // the screen has a useful amount (or everything is loaded).
-  const { loadMore, hasNextPage, isFetchingNextPage } = list;
-  useEffect(() => {
-    if (status && rows.length < 15 && hasNextPage && !isFetchingNextPage) {
-      loadMore();
-    }
-  }, [status, rows.length, hasNextPage, isFetchingNextPage, loadMore]);
+  const rows = list.items;
 
   return (
     <View className="bg-background flex-1">
@@ -195,7 +181,7 @@ function ConcertsList() {
           ListFooterComponent={
             <ListFooter
               loading={list.isFetchingNextPage}
-              shown={status ? list.items.length : rows.length}
+              shown={rows.length}
               total={list.total}
             />
           }

@@ -11,7 +11,7 @@ import {
   createEventSchema,
   createTicketTierSchema,
   idSchema,
-  paginationSchema,
+  listEventsSchema,
   setEventStatusSchema,
   updateEventSchema,
   updateTicketTierSchema,
@@ -40,14 +40,17 @@ async function eventHasOrders(
 export const eventRouter = {
   /* ------------------------------ admin reads ----------------------------- */
   list: permissionProcedure("events:read")
-    .input(paginationSchema)
+    .input(listEventsSchema)
     .query(async ({ ctx, input }): Promise<Paginated<Event>> => {
-      const where = input.search
-        ? or(
-            ilike(event.title, `%${input.search}%`),
-            ilike(event.slug, `%${input.search}%`),
-          )
-        : undefined;
+      const where = and(
+        input.search
+          ? or(
+              ilike(event.title, `%${input.search}%`),
+              ilike(event.slug, `%${input.search}%`),
+            )
+          : undefined,
+        input.status ? eq(event.status, input.status) : undefined,
+      );
       const offset = (input.page - 1) * input.pageSize;
       const [items, [totalRow]] = await Promise.all([
         ctx.db
