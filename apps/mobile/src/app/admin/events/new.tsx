@@ -12,7 +12,7 @@ function NewConcert() {
   const create = useMutation(
     trpc.event.create.mutationOptions({
       onSuccess: (row) => {
-        void queryClient.invalidateQueries(trpc.event.list.queryFilter());
+        void queryClient.invalidateQueries(trpc.event.list.pathFilter());
         router.replace({
           pathname: "/admin/events/[id]",
           params: { id: row.id },

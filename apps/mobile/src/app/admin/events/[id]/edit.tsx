@@ -18,7 +18,7 @@ function EditConcert({ id }: { id: string }) {
     trpc.event.update.mutationOptions({
       onSuccess: () => {
         void queryClient.invalidateQueries(trpc.event.byId.queryFilter({ id }));
-        void queryClient.invalidateQueries(trpc.event.list.queryFilter());
+        void queryClient.invalidateQueries(trpc.event.list.pathFilter());
         router.back();
       },
       onError: (e) => showError(e, "Couldn't save concert"),

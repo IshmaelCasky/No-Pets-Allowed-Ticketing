@@ -39,7 +39,7 @@ function CreateStaffForm() {
     trpc.user.createStaff.mutationOptions({
       onSuccess: async (user) => {
         await Promise.all([
-          queryClient.invalidateQueries(trpc.user.list.queryFilter()),
+          queryClient.invalidateQueries(trpc.user.list.pathFilter()),
           queryClient.invalidateQueries(trpc.role.list.queryFilter()),
         ]);
         router.replace(`/admin/more/users/${user.id}`);

@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button, Card } from "~/components/ui";
 import { authClient } from "~/utils/auth";
+import { clearCsvExports } from "~/utils/share-csv";
 
 /** Staff account: who you're signed in as, and sign out. */
 export default function StaffAccountScreen() {
@@ -14,6 +15,7 @@ export default function StaffAccountScreen() {
   const signOut = async () => {
     await authClient.signOut();
     queryClient.clear();
+    clearCsvExports();
     router.replace("/(auth)/sign-in");
   };
 

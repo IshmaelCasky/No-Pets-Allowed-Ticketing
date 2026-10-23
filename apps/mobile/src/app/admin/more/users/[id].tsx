@@ -48,7 +48,7 @@ function useInvalidateUser(userId: string) {
   return () =>
     Promise.all([
       queryClient.invalidateQueries(trpc.user.byId.queryFilter({ id: userId })),
-      queryClient.invalidateQueries(trpc.user.list.queryFilter()),
+      queryClient.invalidateQueries(trpc.user.list.pathFilter()),
       queryClient.invalidateQueries(trpc.role.list.queryFilter()),
     ]);
 }

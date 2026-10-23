@@ -47,9 +47,17 @@ import { permissionProcedure } from "../trpc";
 /** Outcome of a scan. `already_used` includes when and by whom. */
 export interface ScanResponse {
   result: ScanResult;
-  ticket: Ticket | null;
+  /** The scanned ticket, without its token (the QR value). */
+  ticket: Omit<Ticket, "token"> | null;
   usedAt: Date | null;
   usedByName: string | null;
+}
+
+/** Drop the token (the QR value) before a ticket leaves the server. */
+function withoutToken(t: Ticket): Omit<Ticket, "token"> {
+  const { token, ...rest } = t;
+  void token;
+  return rest;
 }
 
 /** Scanner history row: a scan log without the raw value (see `history`). */
@@ -63,6 +71,7 @@ export interface CheckinRow {
   status: Ticket["status"];
   holderName: string | null;
   buyerName: string | null;
+  /** Null unless the viewer has `orders:read` or `users:read`. */
   buyerEmail: string | null;
   orderCode: string;
   tierName: string | null;
@@ -112,7 +121,16 @@ const buyer = alias(user, "buyer");
 const usedBy = alias(user, "used_by");
 const scannedBy = alias(user, "scanned_by");
 
-function checkinFilters(input: ListCheckinsInput): SQL[] {
+/**
+ * Buyer emails are customer contact data: only roles that already see
+ * customers (`orders:read` / `users:read`) get them, or can search by them.
+ * Gate scanners (`tickets:scan` only) see names, codes and seats.
+ */
+function canSeeEmails(permissions: Set<string>): boolean {
+  return permissions.has("orders:read") || permissions.has("users:read");
+}
+
+function checkinFilters(input: ListCheckinsInput, withEmail: boolean): SQL[] {
   const filters: SQL[] = [
     eq(ticket.eventId, input.eventId),
     ne(ticket.status, "void"),
@@ -125,7 +143,7 @@ function checkinFilters(input: ListCheckinsInput): SQL[] {
     const match = or(
       ilike(ticket.holderName, q),
       ilike(buyer.name, q),
-      ilike(buyer.email, q),
+      withEmail ? ilike(buyer.email, q) : undefined,
       ilike(order.code, q),
       ilike(seat.label, q),
     );
@@ -158,7 +176,7 @@ function checkinQuery(db: Db, where: SQL) {
     .orderBy(sql`${ticket.usedAt} desc nulls last`, asc(ticket.createdAt));
 }
 
-function scanLogFilters(input: ListScanLogsInput): SQL[] {
+function scanLogFilters(input: ListScanLogsInput, withEmail: boolean): SQL[] {
   const filters: SQL[] = [];
   if (input.eventId) filters.push(eq(scanLog.eventId, input.eventId));
   if (input.result) filters.push(eq(scanLog.result, input.result));
@@ -171,7 +189,7 @@ function scanLogFilters(input: ListScanLogsInput): SQL[] {
     const match = or(
       ilike(ticket.holderName, q),
       ilike(buyer.name, q),
-      ilike(buyer.email, q),
+      withEmail ? ilike(buyer.email, q) : undefined,
       ilike(order.code, q),
       ilike(seat.label, q),
     );
@@ -218,7 +236,7 @@ function toScanLogRow(
   const { rawValue, ...rest } = r;
   return {
     ...rest,
-    rawValuePreview: r.ticketId === null ? rawValue.slice(0, 40) : null,
+    rawValuePreview: r.result === "not_found" ? rawValue.slice(0, 40) : null,
   };
 }
 
@@ -283,7 +301,7 @@ export const scanRouter = {
           await writeLog("wrong_event", found.id);
           return {
             result: "wrong_event",
-            ticket: found,
+            ticket: withoutToken(found),
             usedAt: null,
             usedByName: null,
           };
@@ -292,7 +310,7 @@ export const scanRouter = {
           await writeLog("void", found.id);
           return {
             result: "void",
-            ticket: found,
+            ticket: withoutToken(found),
             usedAt: null,
             usedByName: null,
           };
@@ -307,7 +325,7 @@ export const scanRouter = {
             : null;
           return {
             result: "already_used",
-            ticket: found,
+            ticket: withoutToken(found),
             usedAt: found.usedAt,
             usedByName: usedBy?.name ?? null,
           };
@@ -335,7 +353,7 @@ export const scanRouter = {
             : null;
           return {
             result: "already_used",
-            ticket: found,
+            ticket: withoutToken(found),
             usedAt: fresh?.usedAt ?? found.usedAt,
             usedByName: usedBy?.name ?? null,
           };
@@ -343,7 +361,7 @@ export const scanRouter = {
         await writeLog("valid", updated.id);
         return {
           result: "valid",
-          ticket: updated,
+          ticket: withoutToken(updated),
           usedAt,
           usedByName: ctx.user.name,
         };
@@ -443,7 +461,9 @@ export const scanRouter = {
   checkins: permissionProcedure("tickets:scan")
     .input(listCheckinsSchema)
     .query(async ({ ctx, input }): Promise<CheckinsPage> => {
-      const where = and(...checkinFilters(input));
+      const where = and(
+        ...checkinFilters(input, canSeeEmails(ctx.permissions)),
+      );
       const offset = (input.page - 1) * input.pageSize;
       const [items, [totalRow], [countsRow]] = await Promise.all([
         checkinQuery(ctx.db, where ?? sql`true`)
@@ -466,8 +486,11 @@ export const scanRouter = {
             and(eq(ticket.eventId, input.eventId), ne(ticket.status, "void")),
           ),
       ]);
+      const withEmail = canSeeEmails(ctx.permissions);
       return {
-        items,
+        items: withEmail
+          ? items
+          : items.map((r) => ({ ...r, buyerEmail: null })),
         total: totalRow?.value ?? 0,
         page: input.page,
         pageSize: input.pageSize,
@@ -480,13 +503,16 @@ export const scanRouter = {
   exportCheckinsCsv: permissionProcedure("tickets:scan")
     .input(listCheckinsSchema)
     .query(async ({ ctx, input }): Promise<string> => {
-      const where = and(...checkinFilters(input));
+      const where = and(
+        ...checkinFilters(input, canSeeEmails(ctx.permissions)),
+      );
       const rows = await checkinQuery(ctx.db, where ?? sql`true`).limit(10000);
+      const withEmail = canSeeEmails(ctx.permissions);
       const header = [
         "Order",
         "Holder",
         "Buyer",
-        "Buyer Email",
+        ...(withEmail ? ["Buyer Email"] : []),
         "Ticket",
         "Checked In",
         "Checked In At (Manila)",
@@ -496,7 +522,7 @@ export const scanRouter = {
         r.orderCode,
         r.holderName ?? r.buyerName ?? "",
         r.buyerName ?? "",
-        r.buyerEmail ?? "",
+        ...(withEmail ? [r.buyerEmail ?? ""] : []),
         r.seatLabel ?? r.tierName ?? "",
         r.status === "used" ? "Yes" : "No",
         csvTime(r.usedAt),
@@ -509,7 +535,7 @@ export const scanRouter = {
   logs: permissionProcedure("tickets:scan")
     .input(listScanLogsSchema)
     .query(async ({ ctx, input }): Promise<Paginated<ScanLogRow>> => {
-      const filters = scanLogFilters(input);
+      const filters = scanLogFilters(input, canSeeEmails(ctx.permissions));
       const where = filters.length ? and(...filters) : undefined;
       const offset = (input.page - 1) * input.pageSize;
       const [rows, [totalRow]] = await Promise.all([
@@ -535,7 +561,7 @@ export const scanRouter = {
   exportLogsCsv: permissionProcedure("tickets:scan")
     .input(listScanLogsSchema)
     .query(async ({ ctx, input }): Promise<string> => {
-      const filters = scanLogFilters(input);
+      const filters = scanLogFilters(input, canSeeEmails(ctx.permissions));
       const where = filters.length ? and(...filters) : undefined;
       const rows = (await scanLogQuery(ctx.db, where).limit(10000)).map(
         toScanLogRow,

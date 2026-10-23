@@ -12,8 +12,9 @@ export interface PageOf<T> {
 /**
  * Infinite-scroll wrapper for the API's page-numbered admin lists.
  *
- * Build `queryKey` from the procedure's `pathKey()` so the usual
- * `queryClient.invalidateQueries(trpc.x.y.queryFilter())` also refreshes it:
+ * Build `queryKey` from the procedure's `pathKey()`. To refresh it after a
+ * mutation use `queryClient.invalidateQueries(trpc.x.y.pathFilter())` —
+ * NOT `queryFilter()`, whose `type: "query"` part won't match these keys:
  *
  * @example
  * const input = { eventId, result };

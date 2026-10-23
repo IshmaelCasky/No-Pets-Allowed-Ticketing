@@ -43,11 +43,41 @@ function rowTitle(r: Row): string {
   return "Unknown ticket";
 }
 
+type DayRange = "today" | "yesterday" | "week";
+
+const DAY_OPTIONS: readonly { value: DayRange; label: string }[] = [
+  { value: "today", label: "Today" },
+  { value: "yesterday", label: "Yesterday" },
+  { value: "week", label: "Last 7 days" },
+];
+
+/** Start/end of a range of whole Asia/Manila days ending today. */
+function manilaRange(range: DayRange | undefined): {
+  dateFrom?: Date;
+  dateTo?: Date;
+} {
+  if (!range) return {};
+  const today = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Manila",
+  }).format(new Date());
+  const startOfToday = new Date(`${today}T00:00:00+08:00`).getTime();
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  if (range === "today") return { dateFrom: new Date(startOfToday) };
+  if (range === "yesterday") {
+    return {
+      dateFrom: new Date(startOfToday - DAY_MS),
+      dateTo: new Date(startOfToday - 1),
+    };
+  }
+  return { dateFrom: new Date(startOfToday - 6 * DAY_MS) };
+}
+
 export function ScanLogView({ initialEventId }: { initialEventId?: string }) {
   const [eventId, setEventId] = useState<string | undefined>(initialEventId);
   const [result, setResult] = useState<ScanResult | undefined>();
   const [scannedById, setScannedById] = useState<string | undefined>();
   const [search, setSearch] = useState("");
+  const [day, setDay] = useState<DayRange | undefined>();
   const debounced = useDebounced(search.trim());
   const concerts = useScanConcerts();
   const csv = useCsvExport();
@@ -63,6 +93,7 @@ export function ScanLogView({ initialEventId }: { initialEventId?: string }) {
     result,
     scannedById,
     search: debounced || undefined,
+    ...manilaRange(day),
   } satisfies Omit<RouterInputs["scan"]["logs"], "page">;
   const input = { ...filters, pageSize: 30 };
 
@@ -104,6 +135,12 @@ export function ScanLogView({ initialEventId }: { initialEventId?: string }) {
           value={result}
           onChange={setResult}
           allLabel="All results"
+        />
+        <Chips
+          options={DAY_OPTIONS}
+          value={day}
+          onChange={setDay}
+          allLabel="Any day"
         />
         <View className="flex-row items-center gap-2">
           <View className="flex-1">

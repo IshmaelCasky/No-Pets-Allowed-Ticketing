@@ -119,7 +119,7 @@ export default async function UserDetailPage({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Token</TableHead>
+                <TableHead>Order</TableHead>
                 <TableHead>Holder</TableHead>
                 <TableHead>Status</TableHead>
               </TableRow>
@@ -138,7 +138,7 @@ export default async function UserDetailPage({
                 user.tickets.map((t) => (
                   <TableRow key={t.id}>
                     <TableCell className="font-mono text-xs">
-                      {t.token.slice(0, 12)}…
+                      {user.orders.find((o) => o.id === t.orderId)?.code ?? "—"}
                     </TableCell>
                     <TableCell>{t.holderName ?? "—"}</TableCell>
                     <TableCell>

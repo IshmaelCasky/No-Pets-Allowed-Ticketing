@@ -164,7 +164,7 @@ function ConcertDetail({ id }: { id: string }) {
 
   const invalidateConcert = () => {
     void queryClient.invalidateQueries(trpc.event.byId.queryFilter({ id }));
-    void queryClient.invalidateQueries(trpc.event.list.queryFilter());
+    void queryClient.invalidateQueries(trpc.event.list.pathFilter());
   };
 
   const setStatus = useMutation(
@@ -176,7 +176,7 @@ function ConcertDetail({ id }: { id: string }) {
   const remove = useMutation(
     trpc.event.delete.mutationOptions({
       onSuccess: () => {
-        void queryClient.invalidateQueries(trpc.event.list.queryFilter());
+        void queryClient.invalidateQueries(trpc.event.list.pathFilter());
         queryClient.removeQueries(trpc.event.byId.queryFilter({ id }));
         router.back();
       },

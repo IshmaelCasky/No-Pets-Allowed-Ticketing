@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useIsRestoring, useQuery } from "@tanstack/react-query";
 
 import type { PermissionKey } from "@npa/validators";
 
@@ -15,6 +15,7 @@ import { authClient } from "./auth";
  */
 export function usePermissions() {
   const { data: session } = authClient.useSession();
+  const isRestoring = useIsRestoring();
   const enabled = !!session?.user;
   const query = useQuery({
     ...trpc.auth.me.queryOptions(),
@@ -27,7 +28,12 @@ export function usePermissions() {
     hasAny: (keys: readonly PermissionKey[]) =>
       keys.some((k) => permissions.includes(k)),
     isStaff: permissions.length > 0,
-    /** True until `auth.me` has resolved for a signed-in user. */
-    isLoading: enabled && query.isLoading,
+    /**
+     * True until `auth.me` has resolved for a signed-in user. Includes the
+     * offline-cache restore on launch (queries sit idle then, so `isLoading`
+     * alone would briefly report "no permissions" and route staff to the
+     * customer tabs). Not `isPending`: a paused offline query would spin.
+     */
+    isLoading: enabled && (isRestoring || query.isLoading),
   };
 }
