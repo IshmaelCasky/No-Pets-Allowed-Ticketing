@@ -7,6 +7,7 @@ import Animated, {
 } from "react-native-reanimated";
 import Svg, { Rect, Text as SvgText } from "react-native-svg";
 import { useRouter } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { RouterOutputs } from "~/utils/api";
@@ -173,7 +174,8 @@ export function ReservedCheckout({ event }: { event: NonNullable<Event> }) {
 
   const createOrder = useMutation(
     trpc.order.create.mutationOptions({
-      onSuccess: (order) => {
+      onSuccess: async ({ order, paymentUrl }) => {
+        await WebBrowser.openBrowserAsync(paymentUrl);
         router.replace(`/(tabs)/events/pay/${order.code}`);
       },
       onError: (e) => {

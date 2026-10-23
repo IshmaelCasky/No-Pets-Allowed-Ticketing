@@ -64,7 +64,9 @@ export async function createPaymentRequest(
   const res = await fetch(`${apiUrl}payment-requests`, {
     method: "POST",
     headers: headers(apiKey),
-    body,
+    // Serialize to a string so the body type is valid under both DOM and
+    // React Native fetch typings (RN's BodyInit excludes URLSearchParams).
+    body: body.toString(),
   });
   if (!res.ok) {
     throw new Error(`HitPay create failed: ${res.status} ${await res.text()}`);
