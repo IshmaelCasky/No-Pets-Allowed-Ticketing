@@ -40,7 +40,8 @@ import { PAGE_SIZE } from "./lib";
 type Order = RouterOutputs["order"]["adminList"]["items"][number];
 
 const ALL = "__all__";
-const CANCELLABLE: OrderStatus[] = ["pending_payment", "for_review"];
+// Matches the API: only unpaid orders can be cancelled.
+const CANCELLABLE: OrderStatus[] = ["pending_payment"];
 
 export function OrdersTab() {
   const trpc = useTRPC();

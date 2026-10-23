@@ -163,13 +163,14 @@ async function getUserPermissions(roleId: string | null | undefined) {
 }
 
 /**
- * Permission-gated procedure. Code checks permission KEYS, never role names
- * (see CLAUDE.md "Roles & permissions"). Banned users are always rejected.
- * Injects `ctx.permissions` (the full granted set) and a non-null `ctx.user`.
+ * Gated on ANY ONE of several permission keys (e.g. a list two modules read).
+ * Code checks permission KEYS, never role names (see CLAUDE.md "Roles &
+ * permissions"). Banned users are always rejected. Injects `ctx.permissions`
+ * (the full granted set) and a non-null `ctx.user`.
  *
- * @example permissionProcedure("orders:review").mutation(...)
+ * @example anyPermissionProcedure(["users:read", "roles:write"]).query(...)
  */
-export const permissionProcedure = (required: PermissionKey) =>
+export const anyPermissionProcedure = (anyOf: readonly PermissionKey[]) =>
   protectedProcedure.use(async ({ ctx, next }) => {
     const user = ctx.session.user as typeof ctx.session.user & {
       roleId?: string | null;
@@ -181,12 +182,20 @@ export const permissionProcedure = (required: PermissionKey) =>
     }
 
     const permissions = await getUserPermissions(user.roleId);
-    if (!permissions.has(required)) {
+    if (!anyOf.some((key) => permissions.has(key))) {
       throw new TRPCError({
         code: "FORBIDDEN",
-        message: `Missing permission: ${required}`,
+        message: `Missing permission: ${anyOf.join(" or ")}`,
       });
     }
 
     return next({ ctx: { permissions, user } });
   });
+
+/**
+ * Permission-gated procedure (one required key).
+ *
+ * @example permissionProcedure("orders:review").mutation(...)
+ */
+export const permissionProcedure = (required: PermissionKey) =>
+  anyPermissionProcedure([required]);

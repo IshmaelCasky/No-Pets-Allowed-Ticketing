@@ -72,5 +72,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       },
     ],
     "expo-brightness",
+    [
+      "expo-image-picker",
+      {
+        photosPermission:
+          "Allow No Pets Allowed to pick event posters and refund transfer receipts from your photos.",
+        cameraPermission:
+          "Allow No Pets Allowed to take photos of refund transfer receipts.",
+      },
+    ],
   ],
 });

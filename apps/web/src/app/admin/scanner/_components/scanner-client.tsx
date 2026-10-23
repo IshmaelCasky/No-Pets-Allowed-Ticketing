@@ -268,8 +268,16 @@ export function ScannerClient() {
                           <ScanResultBadge result={log.result} />
                         </TableCell>
                         <TableCell className="font-mono text-xs">
-                          {log.rawValue.slice(0, 12)}
-                          {log.rawValue.length > 12 ? "…" : ""}
+                          {log.rawValuePreview ? (
+                            <>
+                              {log.rawValuePreview.slice(0, 12)}
+                              {log.rawValuePreview.length > 12 ? "…" : ""}
+                            </>
+                          ) : (
+                            <span className="text-muted-foreground font-sans">
+                              Ticket
+                            </span>
+                          )}
                         </TableCell>
                         <TableCell className="text-muted-foreground text-xs">
                           {formatManila(log.createdAt)}

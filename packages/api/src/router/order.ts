@@ -4,7 +4,18 @@ import { z } from "zod/v4";
 
 import type { db } from "@npa/db/client";
 import type { Order } from "@npa/db/schema";
-import { and, count, desc, eq, inArray, lte, sql } from "@npa/db";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  ilike,
+  inArray,
+  lte,
+  or,
+  sql,
+} from "@npa/db";
 import {
   event,
   order,
@@ -12,7 +23,9 @@ import {
   role,
   seat,
   seatSection,
+  ticket,
   ticketTier,
+  user,
 } from "@npa/db/schema";
 import {
   cancelOrderSchema,
@@ -47,6 +60,32 @@ function appBaseUrl(): string {
 
 /** A drizzle transaction handle (what `db.transaction` passes to its callback). */
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+/** Admin order list row: the order plus its concert and buyer. */
+export interface AdminOrderRow extends Order {
+  eventTitle: string | null;
+  buyerName: string | null;
+  buyerEmail: string | null;
+}
+
+/** Admin order detail: row + line items + tickets (never ticket tokens). */
+export interface AdminOrderDetail extends AdminOrderRow {
+  items: {
+    id: string;
+    tierName: string | null;
+    seatLabel: string | null;
+    quantity: number;
+    unitPrice: number;
+  }[];
+  tickets: {
+    id: string;
+    status: "active" | "used" | "void";
+    holderName: string | null;
+    tierName: string | null;
+    seatLabel: string | null;
+    usedAt: Date | null;
+  }[];
+}
 
 /** 30-minute payment window from order creation. */
 const PAYMENT_WINDOW_MS = 30 * 60 * 1000;
@@ -403,34 +442,106 @@ export const orderRouter = {
     }),
 
   /* ----------------------------- admin orders ----------------------------- */
-  /** Search all orders by code / reference / buyer. */
+  /** Search all orders by code / buyer name / buyer email. */
   adminList: permissionProcedure("orders:read")
     .input(listOrdersSchema)
-    .query(async ({ ctx, input }): Promise<Paginated<Order>> => {
+    .query(async ({ ctx, input }): Promise<Paginated<AdminOrderRow>> => {
       const filters = [];
       if (input.status) filters.push(eq(order.status, input.status));
       if (input.eventId) filters.push(eq(order.eventId, input.eventId));
       if (input.search) {
-        filters.push(sql`${order.code} ilike ${`%${input.search}%`}`);
+        const q = `%${input.search}%`;
+        const match = or(
+          ilike(order.code, q),
+          ilike(user.name, q),
+          ilike(user.email, q),
+        );
+        if (match) filters.push(match);
       }
       const where = filters.length ? and(...filters) : undefined;
       const offset = (input.page - 1) * input.pageSize;
-      const [items, [totalRow]] = await Promise.all([
+      const [rows, [totalRow]] = await Promise.all([
         ctx.db
-          .select()
+          .select({
+            order,
+            eventTitle: event.title,
+            buyerName: user.name,
+            buyerEmail: user.email,
+          })
           .from(order)
+          .leftJoin(event, eq(order.eventId, event.id))
+          .leftJoin(user, eq(order.userId, user.id))
           .where(where)
           .orderBy(desc(order.createdAt))
           .limit(input.pageSize)
           .offset(offset),
-        ctx.db.select({ value: count() }).from(order).where(where),
+        ctx.db
+          .select({ value: count() })
+          .from(order)
+          .leftJoin(user, eq(order.userId, user.id))
+          .where(where),
       ]);
       return {
-        items,
+        items: rows.map(({ order: o, ...rest }) => ({ ...o, ...rest })),
         total: totalRow?.value ?? 0,
         page: input.page,
         pageSize: input.pageSize,
       };
+    }),
+
+  /**
+   * Full order for the admin detail screen: buyer, concert, line items and
+   * tickets. Ticket tokens are never included.
+   */
+  adminDetail: permissionProcedure("orders:read")
+    .input(z.object({ code: z.string().min(1) }))
+    .query(async ({ ctx, input }): Promise<AdminOrderDetail> => {
+      const [row] = await ctx.db
+        .select({
+          order,
+          eventTitle: event.title,
+          buyerName: user.name,
+          buyerEmail: user.email,
+        })
+        .from(order)
+        .leftJoin(event, eq(order.eventId, event.id))
+        .leftJoin(user, eq(order.userId, user.id))
+        .where(eq(order.code, input.code))
+        .limit(1);
+      if (!row) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Order not found" });
+      }
+      const [items, tickets] = await Promise.all([
+        ctx.db
+          .select({
+            id: orderItem.id,
+            tierName: ticketTier.name,
+            seatLabel: seat.label,
+            quantity: orderItem.quantity,
+            unitPrice: orderItem.unitPrice,
+          })
+          .from(orderItem)
+          .leftJoin(ticketTier, eq(orderItem.tierId, ticketTier.id))
+          .leftJoin(seat, eq(orderItem.seatId, seat.id))
+          .where(eq(orderItem.orderId, row.order.id))
+          .orderBy(asc(orderItem.id)),
+        ctx.db
+          .select({
+            id: ticket.id,
+            status: ticket.status,
+            holderName: ticket.holderName,
+            tierName: ticketTier.name,
+            seatLabel: seat.label,
+            usedAt: ticket.usedAt,
+          })
+          .from(ticket)
+          .leftJoin(ticketTier, eq(ticket.tierId, ticketTier.id))
+          .leftJoin(seat, eq(ticket.seatId, seat.id))
+          .where(eq(ticket.orderId, row.order.id))
+          .orderBy(asc(ticket.createdAt)),
+      ]);
+      const { order: o, ...rest } = row;
+      return { ...o, ...rest, items, tickets };
     }),
 
   /** Cancel an order with a note; releases held inventory. */

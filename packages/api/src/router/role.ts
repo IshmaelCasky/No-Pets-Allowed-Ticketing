@@ -11,7 +11,7 @@ import {
 } from "@npa/validators";
 
 import { audit } from "../audit";
-import { permissionProcedure } from "../trpc";
+import { anyPermissionProcedure, permissionProcedure } from "../trpc";
 
 /** A role plus how many users currently hold it. */
 export interface RoleWithMemberCount extends Role {
@@ -19,8 +19,8 @@ export interface RoleWithMemberCount extends Role {
 }
 
 export const roleRouter = {
-  /** Readable by anyone who manages users (needed for the assign-role picker). */
-  list: permissionProcedure("users:read").query(
+  /** Readable by user managers (assign-role picker) and role managers. */
+  list: anyPermissionProcedure(["users:read", "roles:write"]).query(
     async ({ ctx }): Promise<RoleWithMemberCount[]> => {
       const roles = await ctx.db.select().from(role).orderBy(asc(role.name));
       const counts = await ctx.db

@@ -20,8 +20,11 @@ export const dashboardRouter = {
   /** Admin dashboard metrics. */
   summary: permissionProcedure("orders:read").query(
     async ({ ctx }): Promise<DashboardSummary> => {
-      const startOfToday = new Date();
-      startOfToday.setHours(0, 0, 0, 0);
+      // "Today" is the Asia/Manila calendar day (servers run in UTC).
+      const manilaDay = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Manila",
+      }).format(new Date());
+      const startOfToday = new Date(`${manilaDay}T00:00:00+08:00`);
 
       const [[pendingRow], [revenueRow], [checkInRow], soldRows] =
         await Promise.all([
