@@ -10,6 +10,8 @@ export default function Layout() {
       }}
     >
       <Stack.Screen name="index" options={{ title: "Transactions" }} />
+      <Stack.Screen name="order/[code]" options={{ title: "Order" }} />
+      <Stack.Screen name="refund/[id]" options={{ title: "Refund request" }} />
     </Stack>
   );
 }
