@@ -11,12 +11,12 @@ function TabIcon({ glyph, color }: { glyph: string; color: string }) {
 
 export default function TabsLayout() {
   const { data: session, isPending } = authClient.useSession();
-  const { has } = usePermissions();
+  const { isStaff, isLoading } = usePermissions();
 
-  if (isPending) return null;
+  if (isPending || isLoading) return null;
   if (!session?.user) return <Redirect href="/(auth)/sign-in" />;
-
-  const canScan = has("tickets:scan");
+  // Staff/admin accounts use the admin section, never the customer tabs.
+  if (isStaff) return <Redirect href="/admin" />;
 
   return (
     <Tabs
@@ -38,14 +38,6 @@ export default function TabsLayout() {
         options={{
           title: "My Tickets",
           tabBarIcon: ({ color }) => <TabIcon glyph="🎟" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="scanner"
-        options={{
-          title: "Scanner",
-          href: canScan ? undefined : null,
-          tabBarIcon: ({ color }) => <TabIcon glyph="📷" color={color} />,
         }}
       />
       <Tabs.Screen

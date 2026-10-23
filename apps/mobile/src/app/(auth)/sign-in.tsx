@@ -38,7 +38,8 @@ export default function SignIn() {
       setError(res.error.message ?? "Could not sign in");
       return;
     }
-    router.replace("/(tabs)/events");
+    // Let the entry gate route staff to /admin and customers to the store.
+    router.replace("/");
   };
 
   return (

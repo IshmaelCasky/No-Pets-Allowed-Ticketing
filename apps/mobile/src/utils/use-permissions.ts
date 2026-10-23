@@ -6,8 +6,12 @@ import { trpc } from "./api";
 import { authClient } from "./auth";
 
 /**
- * Current user's permission keys (from their role). Gates the staff scanner.
- * Returns an empty list while unauthenticated or loading.
+ * Current user's permission keys (from their role). Code checks permission
+ * KEYS, never role names. Returns an empty list while unauthenticated/loading.
+ *
+ * `isStaff` = the role grants any permission at all. Staff accounts use the
+ * admin section of the app and never the customer tabs (mirrors the web, where
+ * staff are kept out of the customer storefront).
  */
 export function usePermissions() {
   const { data: session } = authClient.useSession();
@@ -20,6 +24,10 @@ export function usePermissions() {
   return {
     permissions,
     has: (key: PermissionKey) => permissions.includes(key),
+    hasAny: (keys: readonly PermissionKey[]) =>
+      keys.some((k) => permissions.includes(k)),
+    isStaff: permissions.length > 0,
+    /** True until `auth.me` has resolved for a signed-in user. */
     isLoading: enabled && query.isLoading,
   };
 }
