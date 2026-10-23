@@ -1,6 +1,6 @@
 import { Stack } from "expo-router";
 
-/** Scanner stack — header styled like the rest of the app. */
+/** Gate stack — Scanner | Check-ins | Scan log live in `index`. */
 export default function Layout() {
   return (
     <Stack
@@ -9,7 +9,7 @@ export default function Layout() {
         headerTintColor: "#ffffff",
       }}
     >
-      <Stack.Screen name="index" options={{ title: "Scanner" }} />
+      <Stack.Screen name="index" options={{ title: "Gate" }} />
     </Stack>
   );
 }
