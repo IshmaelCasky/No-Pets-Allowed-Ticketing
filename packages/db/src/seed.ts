@@ -25,6 +25,13 @@ const ROLES: {
     isSystem: true,
   },
   {
+    name: "Developer",
+    description:
+      "Full access for the developer. System role, claimed once via /developer.",
+    permissions: ALL,
+    isSystem: true,
+  },
+  {
     name: "Admin",
     description: "Full access except role management.",
     permissions: ALL.filter((p) => p !== "roles:write"),
