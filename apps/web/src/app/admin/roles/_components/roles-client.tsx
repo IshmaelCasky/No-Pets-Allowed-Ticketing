@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import type { RouterOutputs } from "@npa/api";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,16 +17,28 @@ import {
 import { Badge } from "@npa/ui/badge";
 import { Button } from "@npa/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@npa/ui/card";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@npa/ui/table";
 import { toast } from "@npa/ui/toast";
 
 import { useTRPC } from "~/trpc/react";
+import { RESOURCE_LABELS } from "./permission-checklist";
 import { RoleFormDialog } from "./role-form-dialog";
+
+type Role = RouterOutputs["role"]["list"][number];
+
+/** Which areas a role can touch, e.g. "Orders, Refunds, Tickets". */
+function resourceSummary(permissions: Role["permissions"]): string[] {
+  const resources = new Set(permissions.map((p) => p.split(":")[0] ?? p));
+  return [...resources].map((r) => RESOURCE_LABELS[r] ?? r);
+}
+
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 export function RolesClient() {
   const trpc = useTRPC();
@@ -48,88 +61,142 @@ export function RolesClient() {
         <RoleFormDialog mode="create" trigger={<Button>Create role</Button>} />
       </div>
 
-      {isLoading ? (
-        <p className="text-muted-foreground text-sm">Loading…</p>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2">
-          {roles?.map((role) => (
-            <Card key={role.id}>
-              <CardHeader>
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      {role.name}
-                      {role.isSystem && <Badge variant="outline">System</Badge>}
-                    </CardTitle>
-                    <CardDescription className="mt-1">
-                      {role.description ?? "No description"}
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="flex flex-col gap-3">
-                <div className="flex gap-2">
-                  <Badge variant="secondary">
-                    {role.memberCount} member
-                    {role.memberCount === 1 ? "" : "s"}
-                  </Badge>
-                  <Badge variant="secondary">
-                    {role.permissions.length} permission
-                    {role.permissions.length === 1 ? "" : "s"}
-                  </Badge>
-                </div>
-                <div className="flex gap-2">
-                  <RoleFormDialog
-                    mode="edit"
-                    initial={{
-                      id: role.id,
-                      name: role.name,
-                      description: role.description,
-                      permissions: role.permissions,
-                    }}
-                    trigger={
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={role.isSystem}
-                      >
-                        Edit
-                      </Button>
-                    }
-                  />
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={role.isSystem || role.memberCount > 0}
-                      >
-                        Delete
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete {role.name}?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This cannot be undone.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => deleteMutation.mutate({ id: role.id })}
-                        >
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Role</TableHead>
+              <TableHead className="hidden md:table-cell">
+                Description
+              </TableHead>
+              <TableHead>Access</TableHead>
+              <TableHead className="text-right">Members</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              <TableRow>
+                <TableCell
+                  colSpan={5}
+                  className="text-muted-foreground h-24 text-center"
+                >
+                  Loading…
+                </TableCell>
+              </TableRow>
+            ) : !roles?.length ? (
+              <TableRow>
+                <TableCell
+                  colSpan={5}
+                  className="text-muted-foreground h-24 text-center"
+                >
+                  No roles yet.
+                </TableCell>
+              </TableRow>
+            ) : (
+              roles.map((role) => {
+                const areas = resourceSummary(role.permissions);
+                const deleteBlocked = role.isSystem || role.memberCount > 0;
+                return (
+                  <TableRow key={role.id}>
+                    <TableCell className="align-top">
+                      <div className="flex items-center gap-2 font-medium">
+                        {role.name}
+                        {role.isSystem && (
+                          <Badge variant="outline">System</Badge>
+                        )}
+                      </div>
+                      {/* Description moves under the name on small screens. */}
+                      <p className="text-muted-foreground mt-1 max-w-xs text-xs whitespace-normal md:hidden">
+                        {role.description ?? "No description"}
+                      </p>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground hidden max-w-sm align-top whitespace-normal md:table-cell">
+                      {role.description ?? "—"}
+                    </TableCell>
+                    <TableCell className="align-top">
+                      <p className="text-sm">
+                        {plural(role.permissions.length, "permission")}
+                      </p>
+                      <p className="text-muted-foreground max-w-xs text-xs whitespace-normal">
+                        {areas.length ? areas.join(", ") : "No access"}
+                      </p>
+                    </TableCell>
+                    <TableCell className="text-right align-top tabular-nums">
+                      {role.memberCount}
+                    </TableCell>
+                    <TableCell className="align-top">
+                      <div className="flex justify-end gap-2">
+                        <RoleFormDialog
+                          mode="edit"
+                          initial={{
+                            id: role.id,
+                            name: role.name,
+                            description: role.description,
+                            permissions: role.permissions,
+                          }}
+                          trigger={
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={role.isSystem}
+                              title={
+                                role.isSystem
+                                  ? "System roles can't be edited"
+                                  : undefined
+                              }
+                            >
+                              Edit
+                            </Button>
+                          }
+                        />
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={deleteBlocked}
+                              title={
+                                role.isSystem
+                                  ? "System roles can't be deleted"
+                                  : role.memberCount > 0
+                                    ? "Reassign its members first"
+                                    : undefined
+                              }
+                            >
+                              Delete
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Delete {role.name}?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() =>
+                                  deleteMutation.mutate({ id: role.id })
+                                }
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }
