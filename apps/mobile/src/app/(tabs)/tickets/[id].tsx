@@ -16,16 +16,16 @@ export default function TicketDetail() {
   const ticketQ = useQuery(trpc.ticket.byId.queryOptions({ id }));
   const ticket = ticketQ.data;
 
-  const mapQ = useQuery({
-    ...trpc.seatMap.forEvent.queryOptions({ eventId: ticket?.eventId ?? "" }),
-    enabled: !!ticket?.seatId,
+  const tiersQ = useQuery({
+    ...trpc.event.tiersByEvent.queryOptions({ eventId: ticket?.eventId ?? "" }),
+    enabled: !!ticket?.tierId,
   });
 
-  const seatId = ticket?.seatId;
-  const seatLabel = useMemo(() => {
-    if (!seatId) return null;
-    return mapQ.data?.seats.find((s) => s.id === seatId)?.label ?? null;
-  }, [seatId, mapQ.data]);
+  const tierId = ticket?.tierId;
+  const tierName = useMemo(() => {
+    if (!tierId) return null;
+    return tiersQ.data?.find((t) => t.id === tierId)?.name ?? null;
+  }, [tierId, tiersQ.data]);
 
   // `editing` holds the draft name while the sheet is open (null = not editing).
   const [draft, setDraft] = useState<string | null>(null);
@@ -83,8 +83,8 @@ export default function TicketDetail() {
         <Text className="text-muted-foreground text-xs uppercase">
           {ticket.status}
         </Text>
-        {seatLabel ? (
-          <Text className="text-foreground text-xl font-bold">{seatLabel}</Text>
+        {tierName ? (
+          <Text className="text-foreground text-xl font-bold">{tierName}</Text>
         ) : null}
         {ticket.status === "used" && ticket.usedAt ? (
           <Text className="text-destructive text-sm">

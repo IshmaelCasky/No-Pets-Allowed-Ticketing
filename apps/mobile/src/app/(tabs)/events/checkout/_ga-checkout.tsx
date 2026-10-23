@@ -80,7 +80,7 @@ export function GaCheckout({ event }: { event: NonNullable<Event> }) {
       setError("Select at least one ticket");
       return;
     }
-    createOrder.mutate({ mode: "ga", eventId: event.id, items });
+    createOrder.mutate({ eventId: event.id, items });
   };
 
   return (

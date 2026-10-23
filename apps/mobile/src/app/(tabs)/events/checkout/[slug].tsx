@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Empty, Loading } from "~/components/ui";
 import { trpc } from "~/utils/api";
 import { GaCheckout } from "./_ga-checkout";
-import { ReservedCheckout } from "./_reserved-checkout";
 
 export default function Checkout() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
@@ -17,11 +16,7 @@ export default function Checkout() {
   return (
     <>
       <Stack.Screen options={{ title: `Checkout · ${event.title}` }} />
-      {event.seatingMode === "ga" ? (
-        <GaCheckout event={event} />
-      ) : (
-        <ReservedCheckout event={event} />
-      )}
+      <GaCheckout event={event} />
     </>
   );
 }
