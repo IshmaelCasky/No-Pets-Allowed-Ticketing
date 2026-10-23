@@ -54,6 +54,9 @@
     "RESEND_FROM_EMAIL",
     "NEXT_PUBLIC_APP_URL",
     "CRON_SECRET",
+    "HITPAY_API_KEY",
+    "HITPAY_SALT",
+    "HITPAY_API_URL",
     "TEST_DATABASE_URL",
     "PORT"
   ],
