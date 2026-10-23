@@ -9,7 +9,7 @@ export default function Layout() {
         headerTintColor: "#ffffff",
       }}
     >
-      <Stack.Screen name="index" options={{ title: "Events" }} />
+      <Stack.Screen name="index" options={{ title: "Concerts" }} />
     </Stack>
   );
 }

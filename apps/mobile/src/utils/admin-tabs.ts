@@ -18,6 +18,6 @@ export const ADMIN_TABS: {
     glyph: "🧾",
     anyOf: ["orders:read", "refunds:review"],
   },
-  { name: "events", title: "Events", glyph: "🎵", anyOf: ["events:read"] },
+  { name: "events", title: "Concerts", glyph: "🎵", anyOf: ["events:read"] },
   { name: "gate", title: "Gate", glyph: "📷", anyOf: ["tickets:scan"] },
 ];
