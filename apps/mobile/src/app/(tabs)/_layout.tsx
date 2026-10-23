@@ -29,7 +29,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="events"
         options={{
-          title: "Events",
+          title: "Concerts",
           tabBarIcon: ({ color }) => <TabIcon glyph="🎵" color={color} />,
         }}
       />

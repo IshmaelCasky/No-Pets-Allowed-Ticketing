@@ -8,8 +8,8 @@ export default function EventsStack() {
         headerTintColor: "#ffffff",
       }}
     >
-      <Stack.Screen name="index" options={{ title: "Events" }} />
-      <Stack.Screen name="[slug]" options={{ title: "Event" }} />
+      <Stack.Screen name="index" options={{ title: "Concerts" }} />
+      <Stack.Screen name="[slug]" options={{ title: "Concert" }} />
       <Stack.Screen name="checkout/[slug]" options={{ title: "Checkout" }} />
       <Stack.Screen name="pay/[code]" options={{ title: "Pay" }} />
     </Stack>
