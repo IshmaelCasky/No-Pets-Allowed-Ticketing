@@ -23,7 +23,7 @@ export function StatusChip({
     <span
       className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
         meta?.className ??
-        "bg-[oklch(0.3_0.018_310)] text-[oklch(0.68_0.018_309)]"
+        "bg-[oklch(0.3_0.018_250)] text-[oklch(0.68_0.018_250)]"
       }`}
     >
       {meta?.label ?? status}

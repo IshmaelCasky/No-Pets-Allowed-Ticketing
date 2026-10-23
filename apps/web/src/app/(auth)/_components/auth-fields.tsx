@@ -8,7 +8,7 @@ export function DarkInput({
   return (
     <input
       className={cn(
-        "w-full rounded-lg border border-[oklch(0.3_0.018_310)] bg-[oklch(0.16_0.012_312)] px-3.5 py-2.5 text-sm text-white placeholder:text-[oklch(0.55_0.014_309)] focus-visible:border-[oklch(0.62_0.21_350)] focus-visible:ring-[3px] focus-visible:ring-[oklch(0.62_0.21_350)]/40 focus-visible:outline-none",
+        "w-full rounded-lg border border-[oklch(0.3_0.018_250)] bg-[oklch(0.16_0.012_250)] px-3.5 py-2.5 text-sm text-white placeholder:text-[oklch(0.55_0.014_250)] focus-visible:border-[oklch(0.62_0.21_250)] focus-visible:ring-[3px] focus-visible:ring-[oklch(0.62_0.21_250)]/40 focus-visible:outline-none",
         className,
       )}
       {...props}
@@ -18,7 +18,7 @@ export function DarkInput({
 
 export function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <label className="mb-1.5 block text-sm font-medium text-[oklch(0.82_0.012_309)]">
+    <label className="mb-1.5 block text-sm font-medium text-[oklch(0.82_0.012_250)]">
       {children}
     </label>
   );

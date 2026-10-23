@@ -4,7 +4,7 @@ export default function EventsStack() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: "#c03484" },
+        headerStyle: { backgroundColor: "#2f7de6" },
         headerTintColor: "#ffffff",
       }}
     >

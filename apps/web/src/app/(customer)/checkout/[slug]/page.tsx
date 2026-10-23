@@ -22,7 +22,7 @@ export default async function CheckoutPage({
       <h1 className="text-3xl font-black tracking-tight uppercase sm:text-4xl">
         {event.title}
       </h1>
-      <p className="mt-2 text-sm text-[oklch(0.68_0.018_309)]">
+      <p className="mt-2 text-sm text-[oklch(0.68_0.018_250)]">
         Pick your {event.seatingMode === "ga" ? "tickets" : "seats"}. You’ll
         have 30 minutes to pay once you reserve — up to {event.maxPerOrder} per
         order.

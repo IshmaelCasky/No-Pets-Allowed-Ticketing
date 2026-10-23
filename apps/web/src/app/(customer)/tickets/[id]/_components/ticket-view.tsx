@@ -49,7 +49,7 @@ export function TicketView({
 
   return (
     <div className="mt-6">
-      <div className="rounded-2xl border border-[oklch(0.3_0.018_310)] bg-[oklch(0.19_0.013_311)] p-6 text-center">
+      <div className="rounded-2xl border border-[oklch(0.3_0.018_250)] bg-[oklch(0.19_0.013_250)] p-6 text-center">
         <div className="flex items-center justify-center gap-3">
           <h1 className="text-xl font-black tracking-tight uppercase">
             {eventTitle}
@@ -74,11 +74,11 @@ export function TicketView({
           />
         </button>
         {active ? (
-          <p className="mt-3 text-xs text-[oklch(0.6_0.016_309)]">
+          <p className="mt-3 text-xs text-[oklch(0.6_0.016_250)]">
             Tap the code to show it full-screen at the gate.
           </p>
         ) : status === "used" ? (
-          <p className="mt-3 text-xs text-[oklch(0.6_0.016_309)]">
+          <p className="mt-3 text-xs text-[oklch(0.6_0.016_250)]">
             Checked in{usedAt ? ` ${formatManila(usedAt)}` : ""}.
           </p>
         ) : (
@@ -95,8 +95,8 @@ export function TicketView({
       </div>
 
       {/* holder name */}
-      <div className="mt-5 rounded-xl border border-[oklch(0.3_0.018_310)] bg-[oklch(0.19_0.013_311)] p-5">
-        <p className="text-sm font-semibold tracking-widest text-[oklch(0.68_0.018_309)] uppercase">
+      <div className="mt-5 rounded-xl border border-[oklch(0.3_0.018_250)] bg-[oklch(0.19_0.013_250)] p-5">
+        <p className="text-sm font-semibold tracking-widest text-[oklch(0.68_0.018_250)] uppercase">
           Holder name
         </p>
         {editing ? (
@@ -105,7 +105,7 @@ export function TicketView({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Name on this ticket"
-              className="w-full rounded-lg border border-[oklch(0.3_0.018_310)] bg-[oklch(0.16_0.012_312)] px-3.5 py-2.5 text-sm text-white placeholder:text-[oklch(0.55_0.014_309)] focus-visible:border-[oklch(0.62_0.21_350)] focus-visible:outline-none"
+              className="w-full rounded-lg border border-[oklch(0.3_0.018_250)] bg-[oklch(0.16_0.012_250)] px-3.5 py-2.5 text-sm text-white placeholder:text-[oklch(0.55_0.014_250)] focus-visible:border-[oklch(0.62_0.21_250)] focus-visible:outline-none"
             />
             <div className="flex gap-2">
               <button
@@ -117,7 +117,7 @@ export function TicketView({
                     holderName: name.trim() || undefined,
                   })
                 }
-                className="rounded-full bg-[oklch(0.62_0.21_350)] px-5 py-2 text-sm font-bold text-white hover:bg-[oklch(0.68_0.2_349)] disabled:opacity-50"
+                className="rounded-full bg-[oklch(0.62_0.21_250)] px-5 py-2 text-sm font-bold text-white hover:bg-[oklch(0.68_0.2_250)] disabled:opacity-50"
               >
                 Save
               </button>
@@ -127,7 +127,7 @@ export function TicketView({
                   setName(holderName ?? "");
                   setEditing(false);
                 }}
-                className="rounded-full border border-[oklch(0.35_0.02_310)] px-5 py-2 text-sm font-semibold"
+                className="rounded-full border border-[oklch(0.35_0.02_250)] px-5 py-2 text-sm font-semibold"
               >
                 Cancel
               </button>
@@ -140,7 +140,7 @@ export function TicketView({
               <button
                 type="button"
                 onClick={() => setEditing(true)}
-                className="text-sm font-semibold text-[oklch(0.72_0.17_348)] hover:underline"
+                className="text-sm font-semibold text-[oklch(0.72_0.17_250)] hover:underline"
               >
                 Edit
               </button>

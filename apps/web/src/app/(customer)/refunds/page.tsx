@@ -101,7 +101,7 @@ export default async function RefundsPage() {
       <h1 className="text-3xl font-black tracking-tight uppercase sm:text-4xl">
         Refunds
       </h1>
-      <p className="mt-2 text-sm text-[oklch(0.68_0.018_309)]">
+      <p className="mt-2 text-sm text-[oklch(0.68_0.018_250)]">
         Request a refund on an approved order before the cutoff. We send the
         payout manually and upload the transfer receipt once it’s done.
       </p>

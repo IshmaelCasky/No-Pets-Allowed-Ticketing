@@ -47,12 +47,12 @@ export function ShowCountdown({ target }: { target: string | Date }) {
       {cells.map(([v, label]) => (
         <div
           key={label}
-          className="flex min-w-[64px] flex-col items-center rounded-lg border border-[oklch(0.3_0.018_310)] bg-[oklch(0.19_0.013_311)] px-3 py-3"
+          className="flex min-w-[64px] flex-col items-center rounded-lg border border-[oklch(0.3_0.018_250)] bg-[oklch(0.19_0.013_250)] px-3 py-3"
         >
           <span className="font-mono text-3xl font-black tabular-nums sm:text-4xl">
             {String(v).padStart(2, "0")}
           </span>
-          <span className="mt-1 text-[11px] tracking-widest text-[oklch(0.6_0.016_309)] uppercase">
+          <span className="mt-1 text-[11px] tracking-widest text-[oklch(0.6_0.016_250)] uppercase">
             {label}
           </span>
         </div>

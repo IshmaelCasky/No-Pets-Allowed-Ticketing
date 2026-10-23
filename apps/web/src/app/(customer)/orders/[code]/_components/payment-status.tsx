@@ -73,7 +73,7 @@ export function PaymentStatus({
 
   if (status === "refunded") {
     return (
-      <p className="mt-6 rounded-xl border border-[oklch(0.3_0.018_310)] bg-[oklch(0.19_0.013_311)] p-4 text-sm text-[oklch(0.68_0.018_309)]">
+      <p className="mt-6 rounded-xl border border-[oklch(0.3_0.018_250)] bg-[oklch(0.19_0.013_250)] p-4 text-sm text-[oklch(0.68_0.018_250)]">
         This order has been refunded.
       </p>
     );
@@ -81,9 +81,9 @@ export function PaymentStatus({
 
   if (status === "expired" || status === "cancelled") {
     return (
-      <p className="mt-6 rounded-xl border border-[oklch(0.3_0.018_310)] bg-[oklch(0.19_0.013_311)] p-4 text-sm text-[oklch(0.68_0.018_309)]">
+      <p className="mt-6 rounded-xl border border-[oklch(0.3_0.018_250)] bg-[oklch(0.19_0.013_250)] p-4 text-sm text-[oklch(0.68_0.018_250)]">
         This order is {status}. Reserved seats and tickets have been released.{" "}
-        <Link href="/events" className="text-[oklch(0.72_0.17_348)] underline">
+        <Link href="/events" className="text-[oklch(0.72_0.17_250)] underline">
           Browse concerts
         </Link>
         .
@@ -105,7 +105,7 @@ export function PaymentStatus({
       {slug && (
         <Link
           href={`/checkout/${slug}`}
-          className="mt-4 inline-flex rounded-full bg-[oklch(0.62_0.21_350)] px-5 py-2 text-sm font-bold tracking-wide text-white transition-colors hover:bg-[oklch(0.68_0.2_349)]"
+          className="mt-4 inline-flex rounded-full bg-[oklch(0.62_0.21_250)] px-5 py-2 text-sm font-bold tracking-wide text-white transition-colors hover:bg-[oklch(0.68_0.2_250)]"
         >
           Pay now
         </Link>

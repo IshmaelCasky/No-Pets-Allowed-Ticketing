@@ -51,22 +51,22 @@ export function RefundsClient({
     <div className="mt-8 space-y-10">
       {eligibleOrders.length > 0 && (
         <section>
-          <h2 className="mb-4 text-sm font-semibold tracking-widest text-[oklch(0.68_0.018_309)] uppercase">
+          <h2 className="mb-4 text-sm font-semibold tracking-widest text-[oklch(0.68_0.018_250)] uppercase">
             Eligible for refund
           </h2>
           <ul className="space-y-3">
             {eligibleOrders.map((o) => (
               <li
                 key={o.id}
-                className="flex items-center justify-between rounded-xl border border-[oklch(0.3_0.018_310)] bg-[oklch(0.19_0.013_311)] p-5"
+                className="flex items-center justify-between rounded-xl border border-[oklch(0.3_0.018_250)] bg-[oklch(0.19_0.013_250)] p-5"
               >
                 <div>
                   <p className="font-bold">{o.eventTitle}</p>
-                  <p className="font-mono text-sm text-[oklch(0.68_0.018_309)]">
+                  <p className="font-mono text-sm text-[oklch(0.68_0.018_250)]">
                     {o.code} · {formatCentavos(o.totalAmount)}
                   </p>
                   {o.cutoff && (
-                    <p className="text-xs text-[oklch(0.6_0.016_309)]">
+                    <p className="text-xs text-[oklch(0.6_0.016_250)]">
                       Request by {formatManilaDate(o.cutoff)}
                     </p>
                   )}
@@ -74,7 +74,7 @@ export function RefundsClient({
                 <button
                   type="button"
                   onClick={() => setRequestFor(o)}
-                  className="rounded-full border border-[oklch(0.35_0.02_310)] px-5 py-2 text-sm font-semibold hover:border-[oklch(0.62_0.21_350)]"
+                  className="rounded-full border border-[oklch(0.35_0.02_250)] px-5 py-2 text-sm font-semibold hover:border-[oklch(0.62_0.21_250)]"
                 >
                   Request refund
                 </button>
@@ -85,11 +85,11 @@ export function RefundsClient({
       )}
 
       <section>
-        <h2 className="mb-4 text-sm font-semibold tracking-widest text-[oklch(0.68_0.018_309)] uppercase">
+        <h2 className="mb-4 text-sm font-semibold tracking-widest text-[oklch(0.68_0.018_250)] uppercase">
           Your refund requests
         </h2>
         {refunds.length === 0 ? (
-          <p className="text-sm text-[oklch(0.6_0.016_309)]">
+          <p className="text-sm text-[oklch(0.6_0.016_250)]">
             You haven’t requested any refunds.
           </p>
         ) : (
@@ -149,21 +149,21 @@ function RefundCard({ refund }: { refund: RefundRow }) {
   ].filter((s) => !(refund.status === "rejected" && s.label === "Paid"));
 
   return (
-    <li className="rounded-xl border border-[oklch(0.3_0.018_310)] bg-[oklch(0.19_0.013_311)] p-5">
+    <li className="rounded-xl border border-[oklch(0.3_0.018_250)] bg-[oklch(0.19_0.013_250)] p-5">
       <div className="flex items-start justify-between">
         <div>
           <p className="font-bold">{refund.eventTitle ?? refund.orderCode}</p>
-          <p className="font-mono text-sm text-[oklch(0.68_0.018_309)]">
+          <p className="font-mono text-sm text-[oklch(0.68_0.018_250)]">
             {refund.orderCode}
           </p>
         </div>
         <StatusChip kind="refund" status={refund.status} />
       </div>
 
-      <p className="mt-3 text-sm text-[oklch(0.78_0.012_309)]">
+      <p className="mt-3 text-sm text-[oklch(0.78_0.012_250)]">
         Reason: {refund.reason}
       </p>
-      <p className="mt-1 text-xs text-[oklch(0.6_0.016_309)]">
+      <p className="mt-1 text-xs text-[oklch(0.6_0.016_250)]">
         Payout to {refund.payoutMethod} · {refund.payoutAccountName}
       </p>
 
@@ -181,14 +181,14 @@ function RefundCard({ refund }: { refund: RefundRow }) {
               className={`size-2.5 rounded-full ${
                 s.done
                   ? "bg-[oklch(0.7_0.17_155)]"
-                  : "bg-[oklch(0.35_0.02_310)]"
+                  : "bg-[oklch(0.35_0.02_250)]"
               }`}
             />
-            <span className={s.done ? "" : "text-[oklch(0.55_0.014_309)]"}>
+            <span className={s.done ? "" : "text-[oklch(0.55_0.014_250)]"}>
               {s.label}
             </span>
             {s.at && (
-              <span className="text-xs text-[oklch(0.6_0.016_309)]">
+              <span className="text-xs text-[oklch(0.6_0.016_250)]">
                 {formatManila(s.at)}
               </span>
             )}
@@ -199,7 +199,7 @@ function RefundCard({ refund }: { refund: RefundRow }) {
       {refund.status === "paid" && (
         <div className="mt-4">
           {refund.payoutReference && (
-            <p className="text-xs text-[oklch(0.6_0.016_309)]">
+            <p className="text-xs text-[oklch(0.6_0.016_250)]">
               Transfer reference:{" "}
               <span className="font-mono">{refund.payoutReference}</span>
             </p>
@@ -209,14 +209,14 @@ function RefundCard({ refund }: { refund: RefundRow }) {
             <img
               src={receiptUrl}
               alt="Transfer receipt"
-              className="mt-2 max-w-xs rounded-lg border border-[oklch(0.3_0.018_310)]"
+              className="mt-2 max-w-xs rounded-lg border border-[oklch(0.3_0.018_250)]"
             />
           ) : (
             <button
               type="button"
               disabled={loadingReceipt}
               onClick={loadReceipt}
-              className="mt-2 text-sm font-semibold text-[oklch(0.72_0.17_348)] hover:underline disabled:opacity-50"
+              className="mt-2 text-sm font-semibold text-[oklch(0.72_0.17_250)] hover:underline disabled:opacity-50"
             >
               {loadingReceipt ? "Loading…" : "View transfer receipt"}
             </button>
@@ -269,11 +269,11 @@ function RequestDialog({
       aria-modal="true"
     >
       <div
-        className="w-full max-w-md rounded-2xl border border-[oklch(0.3_0.018_310)] bg-[oklch(0.19_0.013_311)] p-6"
+        className="w-full max-w-md rounded-2xl border border-[oklch(0.3_0.018_250)] bg-[oklch(0.19_0.013_250)] p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-lg font-bold">Request refund</h2>
-        <p className="mt-1 text-sm text-[oklch(0.68_0.018_309)]">
+        <p className="mt-1 text-sm text-[oklch(0.68_0.018_250)]">
           {order.eventTitle} · {order.code} ·{" "}
           {formatCentavos(order.totalAmount)}
         </p>
@@ -284,7 +284,7 @@ function RequestDialog({
               rows={3}
               placeholder="Tell us why you’re requesting a refund"
               {...register("reason")}
-              className="w-full rounded-lg border border-[oklch(0.3_0.018_310)] bg-[oklch(0.16_0.012_312)] px-3.5 py-2.5 text-sm text-white placeholder:text-[oklch(0.55_0.014_309)] focus-visible:border-[oklch(0.62_0.21_350)] focus-visible:outline-none"
+              className="w-full rounded-lg border border-[oklch(0.3_0.018_250)] bg-[oklch(0.16_0.012_250)] px-3.5 py-2.5 text-sm text-white placeholder:text-[oklch(0.55_0.014_250)] focus-visible:border-[oklch(0.62_0.21_250)] focus-visible:outline-none"
             />
           </Field>
           <Field label="Payout method" error={errors.payoutMethod?.message}>
@@ -313,14 +313,14 @@ function RequestDialog({
             <button
               type="submit"
               disabled={isSubmitting || request.isPending}
-              className="rounded-full bg-[oklch(0.62_0.21_350)] px-6 py-2.5 text-sm font-bold text-white hover:bg-[oklch(0.68_0.2_349)] disabled:opacity-50"
+              className="rounded-full bg-[oklch(0.62_0.21_250)] px-6 py-2.5 text-sm font-bold text-white hover:bg-[oklch(0.68_0.2_250)] disabled:opacity-50"
             >
               {request.isPending ? "Sending…" : "Submit request"}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-full border border-[oklch(0.35_0.02_310)] px-6 py-2.5 text-sm font-semibold"
+              className="rounded-full border border-[oklch(0.35_0.02_250)] px-6 py-2.5 text-sm font-semibold"
             >
               Cancel
             </button>
@@ -342,7 +342,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="mb-1.5 block text-sm font-medium text-[oklch(0.82_0.012_309)]">
+      <label className="mb-1.5 block text-sm font-medium text-[oklch(0.82_0.012_250)]">
         {label}
       </label>
       {children}
@@ -356,7 +356,7 @@ function Field({
 function Input(props: React.ComponentProps<"input">) {
   return (
     <input
-      className="w-full rounded-lg border border-[oklch(0.3_0.018_310)] bg-[oklch(0.16_0.012_312)] px-3.5 py-2.5 text-sm text-white placeholder:text-[oklch(0.55_0.014_309)] focus-visible:border-[oklch(0.62_0.21_350)] focus-visible:outline-none"
+      className="w-full rounded-lg border border-[oklch(0.3_0.018_250)] bg-[oklch(0.16_0.012_250)] px-3.5 py-2.5 text-sm text-white placeholder:text-[oklch(0.55_0.014_250)] focus-visible:border-[oklch(0.62_0.21_250)] focus-visible:outline-none"
       {...props}
     />
   );

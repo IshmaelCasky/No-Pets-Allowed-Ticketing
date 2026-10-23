@@ -51,11 +51,11 @@ export function GaCheckout({
   };
 
   if (isLoading) {
-    return <p className="text-[oklch(0.68_0.018_309)]">Loading tiers…</p>;
+    return <p className="text-[oklch(0.68_0.018_250)]">Loading tiers…</p>;
   }
   if (!tiers || tiers.length === 0) {
     return (
-      <p className="text-[oklch(0.68_0.018_309)]">
+      <p className="text-[oklch(0.68_0.018_250)]">
         No tickets are on sale for this concert yet.
       </p>
     );
@@ -89,7 +89,7 @@ export function GaCheckout({
           return (
             <li
               key={t.id}
-              className="flex items-center justify-between rounded-xl border border-[oklch(0.3_0.018_310)] bg-[oklch(0.19_0.013_311)] p-5"
+              className="flex items-center justify-between rounded-xl border border-[oklch(0.3_0.018_250)] bg-[oklch(0.19_0.013_250)] p-5"
             >
               <div className="flex items-center gap-4">
                 {t.imageUrl && (
@@ -97,7 +97,7 @@ export function GaCheckout({
                   <img
                     src={t.imageUrl}
                     alt={t.name}
-                    className="size-16 shrink-0 rounded-lg border border-[oklch(0.3_0.018_310)] object-cover"
+                    className="size-16 shrink-0 rounded-lg border border-[oklch(0.3_0.018_250)] object-cover"
                   />
                 )}
                 <div>
@@ -106,7 +106,7 @@ export function GaCheckout({
                     {formatCentavos(t.price)}
                   </p>
                   <p
-                    className={`text-xs ${soldOut ? "text-[oklch(0.72_0.19_25)]" : "text-[oklch(0.6_0.016_309)]"}`}
+                    className={`text-xs ${soldOut ? "text-[oklch(0.72_0.19_25)]" : "text-[oklch(0.6_0.016_250)]"}`}
                   >
                     {soldOut
                       ? "Sold out"
@@ -121,7 +121,7 @@ export function GaCheckout({
                   type="button"
                   disabled={disabled || current === 0}
                   onClick={() => setTier(t.id, current - 1)}
-                  className="size-9 rounded-full border border-[oklch(0.35_0.02_310)] text-lg font-bold disabled:opacity-40"
+                  className="size-9 rounded-full border border-[oklch(0.35_0.02_250)] text-lg font-bold disabled:opacity-40"
                   aria-label={`Remove one ${t.name}`}
                 >
                   −
@@ -133,7 +133,7 @@ export function GaCheckout({
                   type="button"
                   disabled={disabled || current >= remaining}
                   onClick={() => setTier(t.id, current + 1)}
-                  className="size-9 rounded-full border border-[oklch(0.35_0.02_310)] text-lg font-bold disabled:opacity-40"
+                  className="size-9 rounded-full border border-[oklch(0.35_0.02_250)] text-lg font-bold disabled:opacity-40"
                   aria-label={`Add one ${t.name}`}
                 >
                   +
@@ -144,12 +144,12 @@ export function GaCheckout({
         })}
       </ul>
 
-      <aside className="h-fit rounded-xl border border-[oklch(0.3_0.018_310)] bg-[oklch(0.19_0.013_311)] p-6">
-        <h2 className="text-sm font-semibold tracking-widest text-[oklch(0.68_0.018_309)] uppercase">
+      <aside className="h-fit rounded-xl border border-[oklch(0.3_0.018_250)] bg-[oklch(0.19_0.013_250)] p-6">
+        <h2 className="text-sm font-semibold tracking-widest text-[oklch(0.68_0.018_250)] uppercase">
           Summary
         </h2>
         <div className="mt-4 flex items-center justify-between text-sm">
-          <span className="text-[oklch(0.68_0.018_309)]">Tickets</span>
+          <span className="text-[oklch(0.68_0.018_250)]">Tickets</span>
           <span className="font-mono">{totalQty}</span>
         </div>
         <div className="mt-2 flex items-center justify-between">
@@ -162,11 +162,11 @@ export function GaCheckout({
           type="button"
           onClick={submit}
           disabled={createOrder.isPending || totalQty === 0}
-          className="mt-6 w-full rounded-full bg-[oklch(0.62_0.21_350)] px-6 py-3 text-sm font-bold tracking-wide text-white transition-colors hover:bg-[oklch(0.68_0.2_349)] disabled:opacity-50"
+          className="mt-6 w-full rounded-full bg-[oklch(0.62_0.21_250)] px-6 py-3 text-sm font-bold tracking-wide text-white transition-colors hover:bg-[oklch(0.68_0.2_250)] disabled:opacity-50"
         >
           {createOrder.isPending ? "Reserving…" : "Reserve & pay"}
         </button>
-        <p className="mt-3 text-xs text-[oklch(0.6_0.016_309)]">
+        <p className="mt-3 text-xs text-[oklch(0.6_0.016_250)]">
           We’ll hold these for 30 minutes while you pay.
         </p>
       </aside>

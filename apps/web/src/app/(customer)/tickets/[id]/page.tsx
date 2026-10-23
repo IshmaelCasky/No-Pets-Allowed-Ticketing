@@ -31,7 +31,7 @@ export default async function TicketDetailPage({
     <div className="mx-auto max-w-md px-5 py-12">
       <Link
         href="/my-tickets"
-        className="text-sm text-[oklch(0.68_0.018_309)] hover:text-white"
+        className="text-sm text-[oklch(0.68_0.018_250)] hover:text-white"
       >
         ← My tickets
       </Link>

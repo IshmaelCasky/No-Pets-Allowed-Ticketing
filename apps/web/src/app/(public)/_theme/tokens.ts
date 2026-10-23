@@ -12,23 +12,23 @@
 /** The dark stage ground applied to every customer surface. */
 export const stage = {
   /** Page background: deep near-black with a faint magenta cast. */
-  bg: "bg-[oklch(0.16_0.012_312)] text-[oklch(0.97_0.006_308)]",
+  bg: "bg-[oklch(0.16_0.012_250)] text-[oklch(0.97_0.006_250)]",
   /** A slightly raised panel/card on the stage. */
   panel:
-    "bg-[oklch(0.21_0.014_311)] border border-[oklch(0.3_0.018_310)] rounded-xl",
+    "bg-[oklch(0.21_0.014_250)] border border-[oklch(0.3_0.018_250)] rounded-xl",
   /** Hairline divider that reads on the dark ground. */
-  hairline: "border-[oklch(0.3_0.018_310)]",
+  hairline: "border-[oklch(0.3_0.018_250)]",
   /** Muted copy on the dark ground. */
-  muted: "text-[oklch(0.68_0.018_309)]",
+  muted: "text-[oklch(0.68_0.018_250)]",
 } as const;
 
 /** The electric magenta stage light — the single bold accent. */
 export const accent = {
-  text: "text-[oklch(0.72_0.17_348)]",
-  bg: "bg-[oklch(0.62_0.21_350)]",
-  bgHover: "hover:bg-[oklch(0.68_0.2_349)]",
-  ring: "focus-visible:ring-[oklch(0.62_0.21_350)]/50",
-  border: "border-[oklch(0.62_0.21_350)]",
+  text: "text-[oklch(0.72_0.17_250)]",
+  bg: "bg-[oklch(0.62_0.21_250)]",
+  bgHover: "hover:bg-[oklch(0.68_0.2_250)]",
+  ring: "focus-visible:ring-[oklch(0.62_0.21_250)]/50",
+  border: "border-[oklch(0.62_0.21_250)]",
 } as const;
 
 /** Warm amber, reserved for time + urgency (countdowns, doors, windows). */
@@ -43,11 +43,11 @@ export const display =
 
 /** Primary CTA button classes for the dark ground. */
 export const ctaPrimary =
-  "inline-flex items-center justify-center rounded-full bg-[oklch(0.62_0.21_350)] px-7 py-3 text-sm font-bold tracking-wide text-white transition-colors hover:bg-[oklch(0.68_0.2_349)] focus-visible:ring-[3px] focus-visible:ring-[oklch(0.62_0.21_350)]/50 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50";
+  "inline-flex items-center justify-center rounded-full bg-[oklch(0.62_0.21_250)] px-7 py-3 text-sm font-bold tracking-wide text-white transition-colors hover:bg-[oklch(0.68_0.2_250)] focus-visible:ring-[3px] focus-visible:ring-[oklch(0.62_0.21_250)]/50 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50";
 
 /** Secondary/ghost CTA on the dark ground. */
 export const ctaGhost =
-  "inline-flex items-center justify-center rounded-full border border-[oklch(0.35_0.02_310)] px-7 py-3 text-sm font-semibold tracking-wide text-[oklch(0.97_0.006_308)] transition-colors hover:border-[oklch(0.62_0.21_350)] hover:text-[oklch(0.82_0.17_348)]";
+  "inline-flex items-center justify-center rounded-full border border-[oklch(0.35_0.02_250)] px-7 py-3 text-sm font-semibold tracking-wide text-[oklch(0.97_0.006_250)] transition-colors hover:border-[oklch(0.62_0.21_250)] hover:text-[oklch(0.82_0.17_250)]";
 
 /** Status → label + color for order/ticket chips across customer screens. */
 export const ORDER_STATUS_META: Record<
@@ -72,15 +72,15 @@ export const ORDER_STATUS_META: Record<
   },
   expired: {
     label: "Expired",
-    className: "bg-[oklch(0.3_0.018_310)] text-[oklch(0.68_0.018_309)]",
+    className: "bg-[oklch(0.3_0.018_250)] text-[oklch(0.68_0.018_250)]",
   },
   cancelled: {
     label: "Cancelled",
-    className: "bg-[oklch(0.3_0.018_310)] text-[oklch(0.68_0.018_309)]",
+    className: "bg-[oklch(0.3_0.018_250)] text-[oklch(0.68_0.018_250)]",
   },
   refunded: {
     label: "Refunded",
-    className: "bg-[oklch(0.72_0.17_348)]/15 text-[oklch(0.72_0.17_348)]",
+    className: "bg-[oklch(0.72_0.17_250)]/15 text-[oklch(0.72_0.17_250)]",
   },
 };
 
@@ -94,7 +94,7 @@ export const TICKET_STATUS_META: Record<
   },
   used: {
     label: "Checked in",
-    className: "bg-[oklch(0.3_0.018_310)] text-[oklch(0.68_0.018_309)]",
+    className: "bg-[oklch(0.3_0.018_250)] text-[oklch(0.68_0.018_250)]",
   },
   void: {
     label: "Void",
