@@ -38,8 +38,9 @@ export function AuditClient() {
     action: get("action") || undefined,
     entityType: get("entityType") || undefined,
     actorId: get("actorId") || undefined,
-    dateFrom: get("dateFrom") || undefined,
-    dateTo: get("dateTo") || undefined,
+    // Date inputs are whole days in Manila; "to" includes that entire day.
+    dateFrom: get("dateFrom") ? `${get("dateFrom")}T00:00:00+08:00` : undefined,
+    dateTo: get("dateTo") ? `${get("dateTo")}T23:59:59.999+08:00` : undefined,
   };
 
   const input = {

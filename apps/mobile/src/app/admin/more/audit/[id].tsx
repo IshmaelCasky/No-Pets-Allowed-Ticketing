@@ -1,6 +1,6 @@
 import { ScrollView, Text, View } from "react-native";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { AuditRow } from "~/components/people/audit-cache";
 import { KeyValue, Pill, RequirePerm, SectionHeader } from "~/components/admin";
@@ -15,7 +15,9 @@ import {
   auditActionTone,
   entityTypeLabel,
 } from "~/components/people/labels";
-import { Button, Card, Empty } from "~/components/ui";
+import { Button, Card, Empty, Loading } from "~/components/ui";
+import { trpc } from "~/utils/api";
+import { errorMessage } from "~/utils/feedback";
 import { formatManila } from "~/utils/format";
 import { usePermissions } from "~/utils/use-permissions";
 
@@ -130,19 +132,23 @@ function AuditDetail({ row }: { row: AuditRow }) {
 function AuditDetailLoader({ id }: { id: string }) {
   const queryClient = useQueryClient();
   const router = useRouter();
-  const row = findCachedAuditRow(queryClient, id);
-  if (!row) {
-    return (
-      <View className="flex-1 gap-4 p-4">
-        <Empty
-          title="Entry not loaded"
-          hint="Open audit entries from the Audit Logs list."
-        />
-        <Button label="Back to audit logs" onPress={() => router.back()} />
-      </View>
-    );
-  }
-  return <AuditDetail row={row} />;
+  // Show the row from the list cache instantly, then load it from the API
+  // (also covers deep links / a cleared cache).
+  const query = useQuery({
+    ...trpc.audit.byId.queryOptions({ id }),
+    initialData: () => findCachedAuditRow(queryClient, id),
+  });
+  if (query.data) return <AuditDetail row={query.data} />;
+  if (query.isLoading) return <Loading />;
+  return (
+    <View className="flex-1 gap-4 p-4">
+      <Empty
+        title="Entry not found"
+        hint={query.error ? errorMessage(query.error) : undefined}
+      />
+      <Button label="Back to audit logs" onPress={() => router.back()} />
+    </View>
+  );
 }
 
 export default function AuditEntryScreen() {

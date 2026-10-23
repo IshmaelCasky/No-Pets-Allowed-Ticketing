@@ -10,8 +10,8 @@ export type AuditPage = RouterOutputs["audit"]["list"];
 export const auditListKey = () => trpc.audit.list.pathKey();
 
 /**
- * The API has no `audit.byId`, so the detail screen reads the row from the
- * in-memory infinite list cache the user just tapped it in.
+ * Row from the in-memory list cache the user just tapped, used as initial data
+ * for `audit.byId` so the detail screen opens instantly.
  */
 export function findCachedAuditRow(
   queryClient: QueryClient,
