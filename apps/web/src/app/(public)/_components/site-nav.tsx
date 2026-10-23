@@ -7,7 +7,7 @@ import { authClient } from "~/auth/client";
 import { accent } from "../_theme/tokens";
 
 const LINKS = [
-  { href: "/events", label: "Shows" },
+  { href: "/events", label: "Concerts" },
   { href: "/#how-to-buy", label: "How to buy" },
   { href: "/#faq", label: "FAQ" },
 ];

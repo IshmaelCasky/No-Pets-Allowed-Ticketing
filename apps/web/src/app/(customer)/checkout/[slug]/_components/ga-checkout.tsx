@@ -56,7 +56,7 @@ export function GaCheckout({
   if (!tiers || tiers.length === 0) {
     return (
       <p className="text-[oklch(0.68_0.018_309)]">
-        No tickets are on sale for this show yet.
+        No tickets are on sale for this concert yet.
       </p>
     );
   }
@@ -91,20 +91,30 @@ export function GaCheckout({
               key={t.id}
               className="flex items-center justify-between rounded-xl border border-[oklch(0.3_0.018_310)] bg-[oklch(0.19_0.013_311)] p-5"
             >
-              <div>
-                <p className="font-semibold">{t.name}</p>
-                <p className="font-mono text-sm text-[oklch(0.82_0.14_75)]">
-                  {formatCentavos(t.price)}
-                </p>
-                <p
-                  className={`text-xs ${soldOut ? "text-[oklch(0.72_0.19_25)]" : "text-[oklch(0.6_0.016_309)]"}`}
-                >
-                  {soldOut
-                    ? "Sold out"
-                    : notOnSale
-                      ? "Not on sale"
-                      : `${remaining} left`}
-                </p>
+              <div className="flex items-center gap-4">
+                {t.imageUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={t.imageUrl}
+                    alt={t.name}
+                    className="size-16 shrink-0 rounded-lg border border-[oklch(0.3_0.018_310)] object-cover"
+                  />
+                )}
+                <div>
+                  <p className="font-semibold">{t.name}</p>
+                  <p className="font-mono text-sm text-[oklch(0.82_0.14_75)]">
+                    {formatCentavos(t.price)}
+                  </p>
+                  <p
+                    className={`text-xs ${soldOut ? "text-[oklch(0.72_0.19_25)]" : "text-[oklch(0.6_0.016_309)]"}`}
+                  >
+                    {soldOut
+                      ? "Sold out"
+                      : notOnSale
+                        ? "Not on sale"
+                        : `${remaining} left`}
+                  </p>
+                </div>
               </div>
               <div className="flex items-center gap-3">
                 <button

@@ -25,7 +25,7 @@ export default async function TicketDetailPage({
   }
   const publicEvents = await caller.event.publicList();
   const eventTitle =
-    publicEvents.find((e) => e.id === ticket.eventId)?.title ?? "Your show";
+    publicEvents.find((e) => e.id === ticket.eventId)?.title ?? "Your concert";
 
   return (
     <div className="mx-auto max-w-md px-5 py-12">

@@ -170,6 +170,8 @@ export const ticketTier = pgTable(
     salesStartAt: tz(),
     salesEndAt: tz(),
     sortOrder: t.integer().notNull().default(0),
+    // Optional artwork for this ticket type (shown on checkout + the ticket).
+    imageUrl: t.text(),
     createdAt: createdAt(),
   }),
   (table) => [

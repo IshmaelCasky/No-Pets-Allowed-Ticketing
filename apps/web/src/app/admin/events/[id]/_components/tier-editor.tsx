@@ -39,6 +39,7 @@ import { toast } from "@npa/ui/toast";
 
 import { formatCentavos, toDatetimeLocal } from "~/lib/format";
 import { useTRPC } from "~/trpc/react";
+import { ImageUploadField } from "../../../_components/image-upload-field";
 
 type Tier = RouterOutputs["event"]["tiersByEvent"][number];
 
@@ -48,6 +49,7 @@ interface TierFormValues {
   capacity: number;
   salesStartAt?: string;
   salesEndAt?: string;
+  imageUrl?: string;
 }
 
 function TierDialog({
@@ -70,8 +72,10 @@ function TierDialog({
       capacity: tier?.capacity ?? 100,
       salesStartAt: toDatetimeLocal(tier?.salesStartAt),
       salesEndAt: toDatetimeLocal(tier?.salesEndAt),
+      imageUrl: tier?.imageUrl ?? "",
     },
   });
+  const imageUrl = form.watch("imageUrl");
 
   const create = useMutation(
     trpc.event.createTier.mutationOptions({
@@ -104,6 +108,7 @@ function TierDialog({
         ? new Date(values.salesStartAt)
         : undefined,
       salesEndAt: values.salesEndAt ? new Date(values.salesEndAt) : undefined,
+      imageUrl: values.imageUrl?.trim() ? values.imageUrl.trim() : undefined,
     };
     if (tier) {
       update.mutate({ id: tier.id, ...base });
@@ -167,6 +172,18 @@ function TierDialog({
               />
             </Field>
           </div>
+          <Field>
+            <FieldLabel>Artwork (optional)</FieldLabel>
+            <ImageUploadField
+              endpoint="eventPoster"
+              fieldId="tier-image"
+              value={imageUrl}
+              label={imageUrl ? "Replace image" : "Upload image"}
+              onUploaded={({ url }) => {
+                if (url) form.setValue("imageUrl", url);
+              }}
+            />
+          </Field>
           <Button type="submit" disabled={create.isPending || update.isPending}>
             Save
           </Button>
@@ -212,6 +229,7 @@ export function TierEditor({ eventId }: { eventId: string }) {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-16" />
               <TableHead>Name</TableHead>
               <TableHead className="text-right">Price</TableHead>
               <TableHead className="text-right">Capacity</TableHead>
@@ -225,7 +243,7 @@ export function TierEditor({ eventId }: { eventId: string }) {
             {(tiers ?? []).length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={7}
+                  colSpan={8}
                   className="text-muted-foreground h-16 text-center"
                 >
                   No tiers yet.
@@ -234,6 +252,18 @@ export function TierEditor({ eventId }: { eventId: string }) {
             ) : (
               (tiers ?? []).map((t) => (
                 <TableRow key={t.id}>
+                  <TableCell>
+                    {t.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={t.imageUrl}
+                        alt={t.name}
+                        className="size-10 rounded border object-cover"
+                      />
+                    ) : (
+                      <div className="bg-muted size-10 rounded border" />
+                    )}
+                  </TableCell>
                   <TableCell className="font-medium">{t.name}</TableCell>
                   <TableCell className="text-right">
                     {formatCentavos(t.price)}
