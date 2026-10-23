@@ -1,10 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { authClient } from "~/auth/client";
-import { accent } from "../_theme/tokens";
 
 const LINKS = [
   { href: "/events", label: "Concerts" },
@@ -22,12 +22,17 @@ export function SiteNav() {
   const { data: session, isPending } = authClient.useSession();
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[oklch(0.3_0.018_310)]/70 bg-[oklch(0.16_0.012_312)]/85 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-[oklch(0.3_0.018_250)]/70 bg-[oklch(0.16_0.012_250)]/85 backdrop-blur">
       <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-6 px-5">
-        <Link href="/" className="flex items-baseline gap-2">
-          <span className="font-black tracking-tight uppercase">
-            No Pets <span className={accent.text}>Allowed</span>
-          </span>
+        <Link href="/" className="flex items-center">
+          <Image
+            src="/logo.jpg"
+            alt="Bisaya Beats · No Pets Allowed Live"
+            width={160}
+            height={63}
+            priority
+            className="h-9 w-auto rounded"
+          />
         </Link>
 
         <div className="hidden items-center gap-7 text-sm md:flex">
@@ -35,7 +40,7 @@ export function SiteNav() {
             <Link
               key={l.href}
               href={l.href}
-              className="text-[oklch(0.78_0.012_309)] transition-colors hover:text-white"
+              className="text-[oklch(0.78_0.012_250)] transition-colors hover:text-white"
             >
               {l.label}
             </Link>
@@ -47,13 +52,13 @@ export function SiteNav() {
             <>
               <Link
                 href="/my-tickets"
-                className="hidden text-[oklch(0.78_0.012_309)] transition-colors hover:text-white sm:inline"
+                className="hidden text-[oklch(0.78_0.012_250)] transition-colors hover:text-white sm:inline"
               >
                 My tickets
               </Link>
               <Link
                 href="/account"
-                className="rounded-full border border-[oklch(0.35_0.02_310)] px-4 py-1.5 font-semibold transition-colors hover:border-[oklch(0.62_0.21_350)]"
+                className="rounded-full border border-[oklch(0.35_0.02_250)] px-4 py-1.5 font-semibold transition-colors hover:border-[oklch(0.62_0.21_250)]"
               >
                 {session.user.name.split(" ")[0] ?? "Account"}
               </Link>
@@ -61,7 +66,7 @@ export function SiteNav() {
           ) : (
             <Link
               href={`/login?redirect=${encodeURIComponent(pathname)}`}
-              className="rounded-full bg-[oklch(0.62_0.21_350)] px-4 py-1.5 font-bold text-white transition-colors hover:bg-[oklch(0.68_0.2_349)]"
+              className="rounded-full bg-[oklch(0.62_0.21_250)] px-4 py-1.5 font-bold text-white transition-colors hover:bg-[oklch(0.68_0.2_250)]"
             >
               Sign in
             </Link>

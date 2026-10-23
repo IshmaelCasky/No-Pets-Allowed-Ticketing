@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -13,6 +14,9 @@ import { signInSchema } from "@npa/validators";
 
 import { Button, Field } from "~/components/ui";
 import { authClient } from "~/utils/auth";
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports -- static asset module id
+const LOGO = require("../../../assets/logo.jpg") as number;
 
 export default function SignIn() {
   const router = useRouter();
@@ -48,11 +52,14 @@ export default function SignIn() {
         className="flex-1"
       >
         <ScrollView contentContainerClassName="flex-grow justify-center p-6 gap-6">
-          <View className="gap-1">
-            <Text className="text-foreground text-4xl font-bold">
-              No Pets <Text className="text-primary">Allowed</Text>
-            </Text>
-            <Text className="text-muted-foreground">
+          <View className="items-center gap-3">
+            <Image
+              source={LOGO}
+              style={{ width: 260, height: 102 }}
+              resizeMode="contain"
+              className="rounded-lg"
+            />
+            <Text className="text-muted-foreground text-center">
               Sign in to buy tickets and manage your orders.
             </Text>
           </View>

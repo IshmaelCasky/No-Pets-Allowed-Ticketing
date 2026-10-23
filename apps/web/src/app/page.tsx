@@ -23,18 +23,18 @@ export default async function LandingPage() {
       : [];
 
   return (
-    <div className="dark flex min-h-screen flex-col bg-[oklch(0.16_0.012_312)] text-[oklch(0.97_0.006_308)]">
+    <div className="dark flex min-h-screen flex-col bg-[oklch(0.16_0.012_250)] text-[oklch(0.97_0.006_250)]">
       <SiteNav />
 
       <main className="flex-1">
         {/* ---------------------------------------------------------- hero */}
-        <section className="relative overflow-hidden border-b border-[oklch(0.3_0.018_310)]/60">
+        <section className="relative overflow-hidden border-b border-[oklch(0.3_0.018_250)]/60">
           <div
             aria-hidden
-            className="pointer-events-none absolute -top-40 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-[oklch(0.62_0.21_350)]/25 blur-[120px]"
+            className="pointer-events-none absolute -top-40 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-[oklch(0.62_0.21_250)]/25 blur-[120px]"
           />
           <div className="relative mx-auto max-w-6xl px-5 py-20 sm:py-28">
-            <p className="text-sm font-semibold tracking-widest text-[oklch(0.72_0.17_348)]">
+            <p className="text-sm font-semibold tracking-widest text-[oklch(0.72_0.17_250)]">
               {featured ? "Next concert" : "No Pets Allowed"}
             </p>
             <h1 className="mt-4 max-w-4xl font-black tracking-tight uppercase">
@@ -42,19 +42,19 @@ export default async function LandingPage() {
                 {featured ? featured.title : "Live music,"}
               </span>
               {!featured && (
-                <span className="block text-5xl leading-[0.95] text-[oklch(0.72_0.17_348)] sm:text-7xl lg:text-8xl">
+                <span className="block text-5xl leading-[0.95] text-[oklch(0.72_0.17_250)] sm:text-7xl lg:text-8xl">
                   loud nights.
                 </span>
               )}
             </h1>
             {featured && (
-              <p className="mt-6 text-lg text-[oklch(0.78_0.012_309)]">
+              <p className="mt-6 text-lg text-[oklch(0.78_0.012_250)]">
                 {formatManila(featured.startsAt)}
                 {featured.venue ? ` · ${featured.venue}` : ""}
               </p>
             )}
             {featured?.lineup && (
-              <p className="mt-2 max-w-2xl text-[oklch(0.68_0.018_309)]">
+              <p className="mt-2 max-w-2xl text-[oklch(0.68_0.018_250)]">
                 {featured.lineup}
               </p>
             )}
@@ -62,14 +62,14 @@ export default async function LandingPage() {
               {featured ? (
                 <Link
                   href={`/events/${featured.slug}`}
-                  className="inline-flex items-center justify-center rounded-full bg-[oklch(0.62_0.21_350)] px-8 py-3.5 text-sm font-bold tracking-wide text-white transition-colors hover:bg-[oklch(0.68_0.2_349)]"
+                  className="inline-flex items-center justify-center rounded-full bg-[oklch(0.62_0.21_250)] px-8 py-3.5 text-sm font-bold tracking-wide text-white transition-colors hover:bg-[oklch(0.68_0.2_250)]"
                 >
                   Get tickets
                 </Link>
               ) : null}
               <Link
                 href="/events"
-                className="inline-flex items-center justify-center rounded-full border border-[oklch(0.35_0.02_310)] px-8 py-3.5 text-sm font-semibold tracking-wide transition-colors hover:border-[oklch(0.62_0.21_350)]"
+                className="inline-flex items-center justify-center rounded-full border border-[oklch(0.35_0.02_250)] px-8 py-3.5 text-sm font-semibold tracking-wide transition-colors hover:border-[oklch(0.62_0.21_250)]"
               >
                 See all concerts
               </Link>
@@ -85,13 +85,13 @@ export default async function LandingPage() {
             </h2>
             <Link
               href="/events"
-              className="text-sm font-semibold text-[oklch(0.72_0.17_348)] hover:underline"
+              className="text-sm font-semibold text-[oklch(0.72_0.17_250)] hover:underline"
             >
               View all
             </Link>
           </div>
           {upcoming.length === 0 ? (
-            <p className="mt-8 text-[oklch(0.68_0.018_309)]">
+            <p className="mt-8 text-[oklch(0.68_0.018_250)]">
               No concerts announced yet. Check back soon.
             </p>
           ) : (
@@ -105,10 +105,10 @@ export default async function LandingPage() {
 
         {/* --------------------------------------- featured countdown + tiers */}
         {featured && (
-          <section className="border-y border-[oklch(0.3_0.018_310)]/60 bg-[oklch(0.14_0.011_312)]">
+          <section className="border-y border-[oklch(0.3_0.018_250)]/60 bg-[oklch(0.14_0.011_250)]">
             <div className="mx-auto grid max-w-6xl gap-12 px-5 py-16 lg:grid-cols-2">
               <div>
-                <p className="text-sm font-semibold tracking-widest text-[oklch(0.72_0.17_348)]">
+                <p className="text-sm font-semibold tracking-widest text-[oklch(0.72_0.17_250)]">
                   Doors in
                 </p>
                 <h2 className="mt-3 text-3xl font-black tracking-tight uppercase sm:text-4xl">
@@ -121,16 +121,16 @@ export default async function LandingPage() {
                 )}
                 <Link
                   href={`/events/${featured.slug}`}
-                  className="mt-8 inline-flex items-center justify-center rounded-full bg-[oklch(0.62_0.21_350)] px-7 py-3 text-sm font-bold tracking-wide text-white transition-colors hover:bg-[oklch(0.68_0.2_349)]"
+                  className="mt-8 inline-flex items-center justify-center rounded-full bg-[oklch(0.62_0.21_250)] px-7 py-3 text-sm font-bold tracking-wide text-white transition-colors hover:bg-[oklch(0.68_0.2_250)]"
                 >
                   Get tickets
                 </Link>
               </div>
               <div>
-                <h3 className="text-sm font-semibold tracking-widest text-[oklch(0.68_0.018_309)] uppercase">
+                <h3 className="text-sm font-semibold tracking-widest text-[oklch(0.68_0.018_250)] uppercase">
                   {featured.seatingMode === "ga" ? "Tiers" : "Sections"}
                 </h3>
-                <ul className="mt-4 divide-y divide-[oklch(0.3_0.018_310)]/60 rounded-xl border border-[oklch(0.3_0.018_310)]">
+                <ul className="mt-4 divide-y divide-[oklch(0.3_0.018_250)]/60 rounded-xl border border-[oklch(0.3_0.018_250)]">
                   {(featured.seatingMode === "ga"
                     ? featuredTiers.map((t) => ({
                         id: t.id,
@@ -154,7 +154,7 @@ export default async function LandingPage() {
                     >
                       <div>
                         <p className="font-semibold">{row.name}</p>
-                        <p className="text-sm text-[oklch(0.6_0.016_309)]">
+                        <p className="text-sm text-[oklch(0.6_0.016_250)]">
                           {row.note}
                         </p>
                       </div>
@@ -165,7 +165,7 @@ export default async function LandingPage() {
                   ))}
                   {featuredTiers.length === 0 &&
                     featuredSections.length === 0 && (
-                      <li className="px-5 py-4 text-sm text-[oklch(0.6_0.016_309)]">
+                      <li className="px-5 py-4 text-sm text-[oklch(0.6_0.016_250)]">
                         Pricing announced soon.
                       </li>
                     )}
@@ -180,7 +180,7 @@ export default async function LandingPage() {
           <h2 className="text-3xl font-black tracking-tight uppercase sm:text-4xl">
             How to buy
           </h2>
-          <p className="mt-3 max-w-2xl text-[oklch(0.78_0.012_309)]">
+          <p className="mt-3 max-w-2xl text-[oklch(0.78_0.012_250)]">
             No card checkout here — you pay manually and we confirm it. You get{" "}
             <span className="font-semibold text-[oklch(0.82_0.14_75)]">
               30 minutes
@@ -207,13 +207,13 @@ export default async function LandingPage() {
             ].map((s) => (
               <li
                 key={s.step}
-                className="rounded-xl border border-[oklch(0.3_0.018_310)] bg-[oklch(0.19_0.013_311)] p-6"
+                className="rounded-xl border border-[oklch(0.3_0.018_250)] bg-[oklch(0.19_0.013_250)] p-6"
               >
-                <span className="font-mono text-sm font-bold text-[oklch(0.72_0.17_348)]">
+                <span className="font-mono text-sm font-bold text-[oklch(0.72_0.17_250)]">
                   {s.step}
                 </span>
                 <h3 className="mt-3 text-lg font-bold">{s.title}</h3>
-                <p className="mt-2 text-sm text-[oklch(0.68_0.018_309)]">
+                <p className="mt-2 text-sm text-[oklch(0.68_0.018_250)]">
                   {s.body}
                 </p>
               </li>
@@ -222,12 +222,12 @@ export default async function LandingPage() {
         </section>
 
         {/* ------------------------------------------------------- about */}
-        <section className="border-y border-[oklch(0.3_0.018_310)]/60 bg-[oklch(0.14_0.011_312)]">
+        <section className="border-y border-[oklch(0.3_0.018_250)]/60 bg-[oklch(0.14_0.011_250)]">
           <div className="mx-auto max-w-6xl px-5 py-16">
             <h2 className="text-3xl font-black tracking-tight uppercase sm:text-4xl">
               About the night
             </h2>
-            <p className="mt-4 max-w-3xl text-lg text-[oklch(0.78_0.012_309)]">
+            <p className="mt-4 max-w-3xl text-lg text-[oklch(0.78_0.012_250)]">
               No Pets Allowed is a live-music series built around loud rooms and
               louder crowds. Every concert is a single, unrepeatable night —
               real bands, real sweat, no autotune. Tickets are limited and paid
@@ -266,17 +266,17 @@ export default async function LandingPage() {
             ].map((item) => (
               <details
                 key={item.q}
-                className="group rounded-xl border border-[oklch(0.3_0.018_310)] bg-[oklch(0.19_0.013_311)] px-5 py-4"
+                className="group rounded-xl border border-[oklch(0.3_0.018_250)] bg-[oklch(0.19_0.013_250)] px-5 py-4"
               >
                 <summary className="cursor-pointer list-none font-semibold [&::-webkit-details-marker]:hidden">
                   <span className="flex items-center justify-between gap-4">
                     {item.q}
-                    <span className="text-[oklch(0.72_0.17_348)] transition-transform group-open:rotate-45">
+                    <span className="text-[oklch(0.72_0.17_250)] transition-transform group-open:rotate-45">
                       +
                     </span>
                   </span>
                 </summary>
-                <p className="mt-3 text-sm text-[oklch(0.78_0.012_309)]">
+                <p className="mt-3 text-sm text-[oklch(0.78_0.012_250)]">
                   {item.a}
                 </p>
               </details>

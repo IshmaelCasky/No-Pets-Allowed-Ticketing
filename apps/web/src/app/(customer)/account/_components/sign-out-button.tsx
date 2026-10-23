@@ -20,7 +20,7 @@ export function SignOutButton() {
     <button
       type="button"
       onClick={signOut}
-      className="rounded-full border border-[oklch(0.35_0.02_310)] px-6 py-2.5 text-sm font-semibold transition-colors hover:border-[oklch(0.64_0.21_25)] hover:text-[oklch(0.72_0.19_25)]"
+      className="rounded-full border border-[oklch(0.35_0.02_250)] px-6 py-2.5 text-sm font-semibold transition-colors hover:border-[oklch(0.64_0.21_25)] hover:text-[oklch(0.72_0.19_25)]"
     >
       Sign out
     </button>
