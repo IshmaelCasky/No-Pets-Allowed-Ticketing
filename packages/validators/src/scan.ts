@@ -33,7 +33,7 @@ export type ListCheckinsInput = z.infer<typeof listCheckinsSchema>;
 
 /**
  * Scan log tab: every scan attempt, including failures. All filters optional.
- * `search` matches holder / buyer name and order code.
+ * `search` matches holder / buyer name, buyer email, order code, seat.
  */
 export const listScanLogsSchema = paginationSchema.extend({
   eventId: idSchema.optional(),

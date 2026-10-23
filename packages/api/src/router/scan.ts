@@ -166,6 +166,7 @@ function scanLogFilters(input: ListScanLogsInput): SQL[] {
     const match = or(
       ilike(ticket.holderName, q),
       ilike(buyer.name, q),
+      ilike(buyer.email, q),
       ilike(order.code, q),
       ilike(seat.label, q),
     );
@@ -215,6 +216,19 @@ function toScanLogRow(
     rawValuePreview: r.ticketId === null ? rawValue.slice(0, 40) : null,
   };
 }
+
+/** CSV timestamps in Manila time (`2026-10-23 19:05:12`), like the UI. */
+const MANILA_CSV = new Intl.DateTimeFormat("sv-SE", {
+  timeZone: "Asia/Manila",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hour12: false,
+});
+const csvTime = (d: Date | null) => (d ? MANILA_CSV.format(d) : "");
 
 const RESULT_LABEL: Record<ScanResult, string> = {
   valid: "Valid",
@@ -462,7 +476,7 @@ export const scanRouter = {
         "Buyer Email",
         "Ticket",
         "Checked In",
-        "Checked In At",
+        "Checked In At (Manila)",
         "Checked In By",
       ];
       const body = rows.map((r) => [
@@ -472,7 +486,7 @@ export const scanRouter = {
         r.buyerEmail ?? "",
         r.seatLabel ?? r.tierName ?? "",
         r.status === "used" ? "Yes" : "No",
-        r.usedAt?.toISOString() ?? "",
+        csvTime(r.usedAt),
         r.usedByName ?? "",
       ]);
       return toCsv([header, ...body]);
@@ -514,7 +528,7 @@ export const scanRouter = {
         toScanLogRow,
       );
       const header = [
-        "When",
+        "When (Manila)",
         "Result",
         "Event",
         "Order",
@@ -525,7 +539,7 @@ export const scanRouter = {
         "Unknown Code",
       ];
       const body = rows.map((r) => [
-        r.createdAt.toISOString(),
+        csvTime(r.createdAt),
         RESULT_LABEL[r.result],
         r.eventTitle ?? "",
         r.orderCode ?? "",
