@@ -61,7 +61,7 @@ export default function TicketsScreen() {
     return (
       <Empty
         title="No tickets yet"
-        hint="Buy tickets from the Events tab to see them here."
+        hint="Buy tickets from the Concerts tab to see them here."
       />
     );
   }
@@ -91,7 +91,7 @@ export default function TicketsScreen() {
             <TicketRow
               key={t.id}
               ticket={t}
-              eventTitle={titleById.get(t.eventId) ?? "Event"}
+              eventTitle={titleById.get(t.eventId) ?? "Concert"}
             />
           ))}
         </View>

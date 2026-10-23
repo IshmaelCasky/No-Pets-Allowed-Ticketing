@@ -48,11 +48,11 @@ export default function EventsScreen() {
     trpc.event.publicList.queryOptions(),
   );
 
-  if (isLoading) return <Loading label="Loading shows…" />;
+  if (isLoading) return <Loading label="Loading concerts…" />;
   if (!data || data.length === 0) {
     return (
       <Empty
-        title="No upcoming shows"
+        title="No upcoming concerts"
         hint="Check back soon for new No Pets Allowed concerts."
       />
     );

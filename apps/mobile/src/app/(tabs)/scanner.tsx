@@ -23,7 +23,7 @@ type ScanResponse = RouterOutputs["scan"]["scan"];
 const RESULT_UI: Record<ScanResult, { bg: string; title: string }> = {
   valid: { bg: "bg-green-600", title: "VALID" },
   already_used: { bg: "bg-amber-600", title: "ALREADY USED" },
-  wrong_event: { bg: "bg-red-600", title: "WRONG EVENT" },
+  wrong_event: { bg: "bg-red-600", title: "WRONG CONCERT" },
   void: { bg: "bg-red-600", title: "VOID TICKET" },
   not_found: { bg: "bg-red-600", title: "NOT FOUND" },
 };
@@ -150,7 +150,7 @@ export default function ScannerScreen() {
     return (
       <ScrollView contentContainerClassName="p-4 gap-3">
         <Text className="text-foreground text-lg font-bold">
-          Select an event to scan
+          Select a concert to scan
         </Text>
         {(eventsQ.data ?? []).map((e) => (
           <Pressable key={e.id} onPress={() => setEventId(e.id)}>
@@ -161,7 +161,7 @@ export default function ScannerScreen() {
           </Pressable>
         ))}
         {eventsQ.data?.length === 0 ? (
-          <Empty title="No events to scan" />
+          <Empty title="No concerts to scan" />
         ) : null}
       </ScrollView>
     );
@@ -177,7 +177,7 @@ export default function ScannerScreen() {
 
       <View className="flex-row items-center justify-between p-3">
         <Pressable onPress={() => setEventId(null)}>
-          <Text className="text-primary font-semibold">‹ Events</Text>
+          <Text className="text-primary font-semibold">‹ Concerts</Text>
         </Pressable>
         <Text
           className="text-foreground flex-1 text-center font-bold"
