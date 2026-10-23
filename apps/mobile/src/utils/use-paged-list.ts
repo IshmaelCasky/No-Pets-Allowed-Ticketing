@@ -23,7 +23,10 @@ export interface PageOf<T> {
  * );
  * <FlatList data={list.items} onEndReached={list.loadMore} … />
  */
-export function usePagedList<TItem, TPage extends PageOf<TItem>>(
+export function usePagedList<
+  TItem = unknown,
+  TPage extends PageOf<TItem> = PageOf<TItem>,
+>(
   queryKey: QueryKey,
   fetchPage: (page: number) => Promise<TPage>,
   options?: { enabled?: boolean },
@@ -39,8 +42,8 @@ export function usePagedList<TItem, TPage extends PageOf<TItem>>(
   const pages = query.data?.pages ?? [];
   return {
     ...query,
-    /** All loaded rows across pages. */
-    items: pages.flatMap((p) => p.items),
+    /** All loaded rows across pages (typed from the page, so no generics needed). */
+    items: pages.flatMap((p) => p.items) as TPage["items"],
     /** First page (carries totals / extra fields like check-in counts). */
     first: pages[0],
     total: pages[0]?.total ?? 0,

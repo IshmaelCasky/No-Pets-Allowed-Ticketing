@@ -1,10 +1,11 @@
 import type { TRPCRouterRecord } from "@trpc/server";
+import { TRPCError } from "@trpc/server";
 
 import type { SQL } from "@npa/db";
 import type { AuditLog } from "@npa/db/schema";
 import { and, count, desc, eq, gte, lte } from "@npa/db";
 import { auditLog, user } from "@npa/db/schema";
-import { listAuditLogsSchema } from "@npa/validators";
+import { byIdSchema, listAuditLogsSchema } from "@npa/validators";
 
 import type { Paginated } from "../stub";
 import { toCsv } from "../lib";
@@ -60,6 +61,25 @@ export const auditRouter = {
         page: input.page,
         pageSize: input.pageSize,
       };
+    }),
+
+  /** One audit entry (detail screen / deep link). */
+  byId: permissionProcedure("audit:read")
+    .input(byIdSchema)
+    .query(async ({ ctx, input }): Promise<AuditLogRow> => {
+      const [row] = await ctx.db
+        .select({ log: auditLog, actorName: user.name })
+        .from(auditLog)
+        .leftJoin(user, eq(auditLog.actorId, user.id))
+        .where(eq(auditLog.id, input.id))
+        .limit(1);
+      if (!row) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Audit entry not found",
+        });
+      }
+      return { ...row.log, actorName: row.actorName };
     }),
 
   /** CSV export of the filtered audit log. */
