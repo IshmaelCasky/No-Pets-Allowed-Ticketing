@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Alert, RefreshControl, ScrollView, Text, View } from "react-native";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -6,7 +6,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Tone } from "~/components/admin";
 import type { RouterOutputs } from "~/utils/api";
 import { KeyValue, Pill, RequirePerm, SectionHeader } from "~/components/admin";
-import { useConcertTitles } from "~/components/ops/hooks";
 import { hitpayLabel } from "~/components/ops/status";
 import {
   Button,
@@ -21,8 +20,8 @@ import { confirm, errorMessage, showError } from "~/utils/feedback";
 import { formatCentavos, formatManila } from "~/utils/format";
 import { usePermissions } from "~/utils/use-permissions";
 
-type Order = NonNullable<RouterOutputs["order"]["byCode"]>;
-type Ticket = NonNullable<RouterOutputs["user"]["byId"]>["tickets"][number];
+type Order = RouterOutputs["order"]["adminDetail"];
+type Ticket = Order["tickets"][number];
 
 const TICKET_UI: Record<Ticket["status"], { label: string; tone: Tone }> = {
   active: { label: "Not checked in", tone: "blue" },
@@ -88,75 +87,64 @@ function Timeline({ order }: { order: Order }) {
   );
 }
 
-/** Buyer + tickets need `users:read` (no admin order-detail endpoint yet). */
-function BuyerAndTickets({ order }: { order: Order }) {
-  const userQ = useQuery(trpc.user.byId.queryOptions({ id: order.userId }));
-  const tickets = useMemo(
-    () => (userQ.data?.tickets ?? []).filter((t) => t.orderId === order.id),
-    [userQ.data, order.id],
-  );
-  const hasSeats = tickets.some((t) => t.seatId);
-  const tiersQ = useQuery(
-    trpc.event.tiersByEvent.queryOptions({ eventId: order.eventId }),
-  );
-  const seatsQ = useQuery({
-    ...trpc.seatMap.forEvent.queryOptions({ eventId: order.eventId }),
-    enabled: hasSeats,
-  });
-  const tierName = useMemo(
-    () => new Map((tiersQ.data ?? []).map((t) => [t.id, t.name])),
-    [tiersQ.data],
-  );
-  const seatLabel = useMemo(
-    () => new Map((seatsQ.data?.seats ?? []).map((s) => [s.id, s.label])),
-    [seatsQ.data],
-  );
-
-  if (userQ.isLoading) return <Loading />;
-  const buyer = userQ.data;
-
+/** Line items (unit price at purchase), buyer and issued tickets. */
+function ItemsBuyerTickets({ order }: { order: Order }) {
   return (
     <>
-      <SectionHeader title="Buyer" />
-      <Card>
-        {buyer ? (
-          <>
-            <KeyValue label="Name" value={buyer.name} />
-            <KeyValue label="Email" value={buyer.email} />
-            {buyer.phone ? (
-              <KeyValue label="Phone" value={buyer.phone} />
-            ) : null}
-          </>
+      <SectionHeader title="Items" />
+      <Card className="gap-2">
+        {order.items.length === 0 ? (
+          <Text className="text-muted-foreground text-sm">No items.</Text>
         ) : (
-          <Text className="text-muted-foreground text-sm">
-            {userQ.error ? errorMessage(userQ.error) : "Buyer not found."}
-          </Text>
+          order.items.map((it) => (
+            <View key={it.id} className="flex-row items-start gap-3">
+              <View className="flex-1">
+                <Text className="text-foreground text-sm font-semibold">
+                  {it.seatLabel ?? it.tierName ?? "Ticket"}
+                </Text>
+                <Text className="text-muted-foreground text-xs">
+                  {it.quantity} × {formatCentavos(it.unitPrice)}
+                </Text>
+              </View>
+              <Text className="text-foreground text-sm font-semibold">
+                {formatCentavos(it.quantity * it.unitPrice)}
+              </Text>
+            </View>
+          ))
         )}
+        <View className="border-border mt-1 flex-row justify-between border-t pt-2">
+          <Text className="text-foreground text-sm font-bold">Total</Text>
+          <Text className="text-foreground text-sm font-bold">
+            {formatCentavos(order.totalAmount)}
+          </Text>
+        </View>
       </Card>
 
-      <SectionHeader title={`Tickets (${tickets.length})`} />
+      <SectionHeader title="Buyer" />
+      <Card>
+        <KeyValue label="Name" value={order.buyerName ?? "—"} />
+        <KeyValue label="Email" value={order.buyerEmail ?? "—"} />
+      </Card>
+
+      <SectionHeader title={`Tickets (${order.tickets.length})`} />
       <Card className="gap-3">
-        {tickets.length === 0 ? (
+        {order.tickets.length === 0 ? (
           <Text className="text-muted-foreground text-sm">
             {order.status === "pending_payment"
               ? "Tickets are issued once HitPay confirms the payment."
               : "No tickets for this order."}
           </Text>
         ) : (
-          tickets.map((t) => {
+          order.tickets.map((t) => {
             const ui = TICKET_UI[t.status];
-            const label =
-              (t.seatId ? seatLabel.get(t.seatId) : undefined) ??
-              (t.tierId ? tierName.get(t.tierId) : undefined) ??
-              "Ticket";
             return (
               <View key={t.id} className="flex-row items-center gap-3">
                 <View className="flex-1">
                   <Text className="text-foreground text-sm font-semibold">
-                    {label}
+                    {t.seatLabel ?? t.tierName ?? "Ticket"}
                   </Text>
                   <Text className="text-muted-foreground text-xs">
-                    {t.holderName ?? buyer?.name ?? "—"}
+                    {t.holderName ?? order.buyerName ?? "—"}
                     {t.usedAt ? ` · ${formatManila(t.usedAt)}` : ""}
                   </Text>
                 </View>
@@ -181,14 +169,15 @@ function CancelOrder({ order }: { order: Order }) {
         Alert.alert("Order cancelled", `Order ${order.code} was cancelled.`);
         await Promise.all([
           queryClient.invalidateQueries(trpc.order.adminList.pathFilter()),
-          queryClient.invalidateQueries(trpc.order.byCode.pathFilter()),
+          queryClient.invalidateQueries(trpc.order.adminDetail.pathFilter()),
           queryClient.invalidateQueries(trpc.dashboard.summary.pathFilter()),
-          queryClient.invalidateQueries(trpc.user.byId.pathFilter()),
         ]);
       },
       onError: async (err) => {
         showError(err);
-        await queryClient.invalidateQueries(trpc.order.byCode.pathFilter());
+        await queryClient.invalidateQueries(
+          trpc.order.adminDetail.pathFilter(),
+        );
       },
     }),
   );
@@ -234,8 +223,7 @@ function CancelOrder({ order }: { order: Order }) {
 
 function OrderDetail({ code }: { code: string }) {
   const { has } = usePermissions();
-  const concerts = useConcertTitles();
-  const orderQ = useQuery(trpc.order.byCode.queryOptions({ code }));
+  const orderQ = useQuery(trpc.order.adminDetail.queryOptions({ code }));
 
   if (orderQ.isLoading) return <Loading />;
   const order = orderQ.data;
@@ -271,7 +259,7 @@ function OrderDetail({ code }: { code: string }) {
           {formatCentavos(order.totalAmount)}
         </Text>
         <Text className="text-muted-foreground text-sm">
-          {concerts.titles.get(order.eventId) ?? "Concert"}
+          {order.eventTitle ?? "Concert"}
         </Text>
       </Card>
 
@@ -295,13 +283,7 @@ function OrderDetail({ code }: { code: string }) {
       <SectionHeader title="Timeline" />
       <Timeline order={order} />
 
-      {has("users:read") ? (
-        <BuyerAndTickets order={order} />
-      ) : (
-        <Text className="text-muted-foreground text-xs">
-          Buyer and ticket details need the Users permission.
-        </Text>
-      )}
+      <ItemsBuyerTickets order={order} />
 
       {order.status === "pending_payment" && has("orders:review") ? (
         <CancelOrder order={order} />

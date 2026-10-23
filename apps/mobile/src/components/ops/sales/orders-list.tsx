@@ -1,4 +1,4 @@
-/** Transactions → Orders: search by code, status + concert filters, infinite list. */
+/** Transactions → Orders: search code / buyer, status + concert filters, infinite list. */
 import { useState } from "react";
 import { FlatList, RefreshControl, View } from "react-native";
 import { useRouter } from "expo-router";
@@ -55,7 +55,7 @@ export function OrdersList() {
         <SearchBar
           value={search}
           onChangeText={setSearch}
-          placeholder="Search order code (NPA-…)"
+          placeholder="Order code, buyer name or email"
         />
         <SelectField
           title="Concert"
@@ -109,12 +109,15 @@ export function OrdersList() {
           renderItem={({ item }) => (
             <ListRow
               title={item.code}
-              subtitle={`${formatCentavos(item.totalAmount)} · ${
-                concerts.titles.get(item.eventId) ?? "Concert"
-              }`}
-              meta={`${formatManila(item.createdAt)} · HitPay: ${hitpayLabel(
-                item.hitpayStatus,
-              )}`}
+              subtitle={[
+                item.buyerName ?? item.buyerEmail,
+                item.eventTitle ?? "Concert",
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+              meta={`${formatCentavos(item.totalAmount)} · ${formatManila(
+                item.createdAt,
+              )} · HitPay: ${hitpayLabel(item.hitpayStatus)}`}
               right={<StatusBadge status={item.status} />}
               onPress={() => router.push(`/admin/sales/order/${item.code}`)}
             />

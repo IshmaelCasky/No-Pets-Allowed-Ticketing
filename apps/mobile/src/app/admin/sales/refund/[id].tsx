@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { markRefundPaidSchema, rejectRefundSchema } from "@npa/validators";
 
-import type { Refund } from "~/components/ops/sales/use-refund";
+import type { RouterOutputs } from "~/utils/api";
 import {
   KeyValue,
   ListRow,
@@ -13,28 +13,21 @@ import {
   RequirePerm,
   SectionHeader,
 } from "~/components/admin";
-import { useConcertTitles } from "~/components/ops/hooks";
 import { ReasonSheet } from "~/components/ops/reason-sheet";
 import { ProofButton } from "~/components/ops/sales/proof-viewer";
-import { useRefund } from "~/components/ops/sales/use-refund";
 import {
   REFUND_STATUS_LABEL,
   REFUND_STATUS_TONE,
 } from "~/components/ops/status";
-import {
-  Button,
-  Card,
-  Empty,
-  Field,
-  Loading,
-  StatusBadge,
-} from "~/components/ui";
+import { Button, Card, Empty, Field, Loading } from "~/components/ui";
 import { trpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
 import { confirm, errorMessage, showError } from "~/utils/feedback";
 import { formatCentavos, formatManila } from "~/utils/format";
 import { useImageUploader } from "~/utils/uploadthing";
 import { usePermissions } from "~/utils/use-permissions";
+
+type Refund = RouterOutputs["refund"]["byId"];
 
 /** tRPC CONFLICT = someone else already reviewed / paid it. */
 function isConflict(err: unknown): boolean {
@@ -43,54 +36,32 @@ function isConflict(err: unknown): boolean {
   return data?.code === "CONFLICT";
 }
 
-/** Order + buyer for a refund. Needs `users:read` (queue rows only carry ids). */
+/** Order + buyer for a refund (carried on the refund row). */
 function OrderSummary({ refund }: { refund: Refund }) {
   const router = useRouter();
   const { has } = usePermissions();
-  const concerts = useConcertTitles();
-  const userQ = useQuery({
-    ...trpc.user.byId.queryOptions({ id: refund.userId }),
-    enabled: has("users:read"),
-  });
-
-  if (!has("users:read")) {
-    return (
-      <Card>
-        <Text className="text-muted-foreground text-sm">
-          Order and buyer details need the Users permission.
-        </Text>
-      </Card>
-    );
-  }
-  if (userQ.isLoading) return <Loading />;
-  const buyer = userQ.data;
-  const order = buyer?.orders.find((o) => o.id === refund.orderId);
-
+  const code = refund.orderCode;
   return (
     <>
-      {order ? (
-        <ListRow
-          title={order.code}
-          subtitle={`${formatCentavos(order.totalAmount)} · ${
-            concerts.titles.get(order.eventId) ?? "Concert"
-          }`}
-          meta={`Bought ${formatManila(order.createdAt)}`}
-          right={<StatusBadge status={order.status} />}
-          onPress={
-            has("orders:read")
-              ? () => router.push(`/admin/sales/order/${order.code}`)
-              : undefined
-          }
-        />
-      ) : null}
+      <ListRow
+        title={code ?? "Order"}
+        subtitle={[
+          refund.totalAmount != null
+            ? formatCentavos(refund.totalAmount)
+            : null,
+          refund.eventTitle ?? "Concert",
+        ]
+          .filter(Boolean)
+          .join(" · ")}
+        onPress={
+          code && has("orders:read")
+            ? () => router.push(`/admin/sales/order/${code}`)
+            : undefined
+        }
+      />
       <Card>
-        <KeyValue label="Buyer" value={buyer?.name ?? "—"} />
-        <KeyValue label="Email" value={buyer?.email ?? "—"} />
-        {userQ.error ? (
-          <Text className="text-destructive text-xs">
-            {errorMessage(userQ.error)}
-          </Text>
-        ) : null}
+        <KeyValue label="Buyer" value={refund.buyerName ?? "—"} />
+        <KeyValue label="Email" value={refund.buyerEmail ?? "—"} />
       </Card>
     </>
   );
@@ -101,7 +72,7 @@ function MarkPaid({
   onDone,
 }: {
   refund: Refund;
-  onDone: (row: Refund) => Promise<void>;
+  onDone: () => Promise<void>;
 }) {
   const queryClient = useQueryClient();
   const [payoutReference, setPayoutReference] = useState("");
@@ -136,9 +107,9 @@ function MarkPaid({
 
   const markPaid = useMutation(
     trpc.refund.markPaid.mutationOptions({
-      onSuccess: async (row) => {
+      onSuccess: async () => {
         Alert.alert("Refund marked as paid", "The order is now refunded.");
-        await onDone(row);
+        await onDone();
       },
       onError: async (err) => {
         if (isConflict(err)) {
@@ -146,7 +117,10 @@ function MarkPaid({
             "Already handled",
             "Only an approved refund can be marked paid.",
           );
-          await queryClient.invalidateQueries(trpc.refund.queue.pathFilter());
+          await Promise.all([
+            queryClient.invalidateQueries(trpc.refund.queue.pathFilter()),
+            queryClient.invalidateQueries(trpc.refund.byId.pathFilter()),
+          ]);
         } else {
           showError(err);
         }
@@ -238,16 +212,15 @@ function MarkPaid({
 
 function RefundDetail({ id }: { id: string }) {
   const queryClient = useQueryClient();
-  const refundQ = useRefund(id);
+  const refundQ = useQuery(trpc.refund.byId.queryOptions({ id }));
   const [rejecting, setRejecting] = useState(false);
 
-  const refresh = async (row?: Refund) => {
-    if (row) refundQ.setRefund(row);
+  const refresh = async () => {
     await Promise.all([
+      queryClient.invalidateQueries(trpc.refund.byId.pathFilter()),
       queryClient.invalidateQueries(trpc.refund.queue.pathFilter()),
       queryClient.invalidateQueries(trpc.order.adminList.pathFilter()),
-      queryClient.invalidateQueries(trpc.order.byCode.pathFilter()),
-      queryClient.invalidateQueries(trpc.user.byId.pathFilter()),
+      queryClient.invalidateQueries(trpc.order.adminDetail.pathFilter()),
       queryClient.invalidateQueries(trpc.dashboard.summary.pathFilter()),
     ]);
   };
@@ -259,9 +232,9 @@ function RefundDetail({ id }: { id: string }) {
 
   const approve = useMutation(
     trpc.refund.approve.mutationOptions({
-      onSuccess: async (row) => {
+      onSuccess: async () => {
         Alert.alert("Refund approved", "Tickets voided. Send the payout next.");
-        await refresh(row);
+        await refresh();
       },
       onError: async (err) => {
         if (isConflict(err)) await onConflict();
@@ -272,10 +245,10 @@ function RefundDetail({ id }: { id: string }) {
 
   const reject = useMutation(
     trpc.refund.reject.mutationOptions({
-      onSuccess: async (row) => {
+      onSuccess: async () => {
         setRejecting(false);
         Alert.alert("Refund rejected", "The customer has been emailed.");
-        await refresh(row);
+        await refresh();
       },
       onError: async (err) => {
         if (isConflict(err)) {
