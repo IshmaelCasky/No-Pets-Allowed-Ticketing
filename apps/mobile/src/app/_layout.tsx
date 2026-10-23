@@ -6,7 +6,7 @@ import { StatusBar } from "expo-status-bar";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 
 import { queryClient } from "~/utils/api";
-import { asyncStoragePersister } from "~/utils/persister";
+import { asyncStoragePersister, isOfflineQuery } from "~/utils/persister";
 
 import "../styles.css";
 
@@ -22,6 +22,7 @@ export default function RootLayout() {
           persistOptions={{
             persister: asyncStoragePersister,
             maxAge: 1000 * 60 * 60 * 24 * 7,
+            dehydrateOptions: { shouldDehydrateQuery: isOfflineQuery },
           }}
         >
           <Stack
@@ -36,6 +37,7 @@ export default function RootLayout() {
             <Stack.Screen name="index" options={{ headerShown: false }} />
             <Stack.Screen name="(auth)" options={{ headerShown: false }} />
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="admin" options={{ headerShown: false }} />
           </Stack>
           <StatusBar style="light" />
         </PersistQueryClientProvider>

@@ -1,6 +1,6 @@
 import { z } from "zod/v4";
 
-import { idSchema } from "./common";
+import { idSchema, paginationSchema } from "./common";
 import { eventStatusSchema } from "./enums";
 
 export const slugSchema = z
@@ -51,3 +51,9 @@ export const setEventStatusSchema = z.object({
   id: idSchema,
   status: eventStatusSchema,
 });
+
+/** Admin concert list: pagination + search (title/slug) + optional status. */
+export const listEventsSchema = paginationSchema.extend({
+  status: eventStatusSchema.optional(),
+});
+export type ListEventsInput = z.infer<typeof listEventsSchema>;

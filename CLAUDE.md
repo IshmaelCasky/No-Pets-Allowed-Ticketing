@@ -25,7 +25,7 @@ Read this whole file before writing code. Follow the **Orchestration** section f
 ```
 apps/
   web/          # landing, customer portal (/events, /my-tickets), admin (/admin/*), API + UploadThing route handlers
-  mobile/       # customer app + staff scanner mode (role-gated)
+  mobile/       # customer app + staff/admin section (role-gated, /admin)
 packages/
   db/           # Drizzle schema, migrations, seed
   auth/         # better-auth server config + web/expo clients
@@ -165,6 +165,12 @@ All list screens: shadcn DataTable with server-side pagination, search, filters.
    - **Orders** — search all orders by code/buyer, see HitPay payment status, cancel unpaid orders.
    - **Refunds** — request queue (reason, order, payout details), approve/reject, then mark paid with transfer receipt + reference.
 7. **QR Scanner** — event picker, camera scan, full-screen green/red result + sound, manual code entry, live check-in counter, scan history.
+8. **Scans** (`tickets:scan`) — tabs:
+   - **Check-ins** — pick an event; every live ticket with checked-in / not yet, time and staff; counts; search; CSV export.
+   - **Scan log** — every scan attempt incl. failures; filter by event / result / staff / date; CSV export. Raw scanned values are shown only for `not_found` codes (for real tickets the raw value is the ticket token — never expose it).
+
+### Mobile admin (`apps/mobile/src/app/admin`)
+Staff/admin accounts (any role with ≥1 permission) land in the admin section of the mobile app and never see customer tabs — same rule as the web storefront. It has every web admin module, laid out for phones: tabs **Dashboard**, **Transactions**, **Events**, **Gate** (scanner + Scans module), **More** (Users, Roles, Audit Logs, Account). Tabs/menu items are gated by the same permission keys as the web sidebar. CSV exports open the share sheet. Admin data is never persisted to disk (only the customer's own tickets are cached offline).
 
 ## Customer surfaces
 
@@ -179,7 +185,8 @@ All list screens: shadcn DataTable with server-side pagination, search, filters.
 | Ticket detail (full-screen QR, seat label if reserved, editable holder name) | ✓ | ✓ (brightness boost) |
 | Request refund (reason + payout account) and refund status | ✓ | ✓ |
 | Account | ✓ | ✓ |
-| Staff scanner | `/admin/scanner` | role-gated tab (`tickets:scan`) |
+| Staff scanner | `/admin/scanner` | admin section → Gate tab (`tickets:scan`) |
+| Admin modules (all of the above) + Scans | `/admin/*` | admin section (`/admin`), staff accounts only |
 
 ## Landing page
 
@@ -191,7 +198,7 @@ Dark, bold concert aesthetic. Sections: nav → hero (next show, CTA) → upcomi
 
 | Topic | Decision |
 | --- | --- |
-| Mobile | Expo app for customers + role-gated staff scanner |
+| Mobile | Expo app for customers + full staff/admin section (all web admin modules, phone layout); staff accounts see only the admin section |
 | Payment | HitPay hosted checkout (sandbox for now), webhook-confirmed; no manual proof/review |
 | Payment window | 30 minutes from order creation (seats/tiers held during it) |
 | Max tickets per order | `event.maxPerOrder`, default 4 |
@@ -224,7 +231,7 @@ The lead agent (main session) owns planning, shared contracts, and integration. 
 | `api-builder` | `packages/api/src/routers/**` (bodies only), `packages/api/src/emails/**` | order, review, refund, seat map, ticket, scan, event, payment method, user, role, audit procedures + emails + tests |
 | `admin-web` | `apps/web/app/admin/**`, `packages/ui/**` | all 7 admin modules |
 | `customer-web` | `apps/web/app/(public)/**`, `apps/web/app/(customer)/**`, `apps/web/app/(auth)/**` | landing, events, checkout, HitPay redirect + payment status, My Tickets |
-| `mobile-app` | `apps/mobile/**` | customer app + scanner mode |
+| `mobile-app` | `apps/mobile/**` | customer app + admin section |
 
 Rules for every subagent:
 - Edit only the paths you own. Need a contract change (schema, validator, router signature)? **Stop and report it** to the lead instead of editing.

@@ -65,7 +65,10 @@ export const userRouter = {
       async ({
         ctx,
         input,
-      }): Promise<(User & { orders: Order[]; tickets: Ticket[] }) | null> => {
+      }): Promise<
+        (User & { orders: Order[]; tickets: Omit<Ticket, "token">[] }) | null
+      > => {
+        // Ticket tokens are what the QR encodes — never sent to admin screens.
         const row = await ctx.db.query.user.findFirst({
           where: eq(user.id, input.id),
         });
@@ -83,7 +86,6 @@ export const userRouter = {
               eventId: ticket.eventId,
               tierId: ticket.tierId,
               holderName: ticket.holderName,
-              token: ticket.token,
               status: ticket.status,
               usedAt: ticket.usedAt,
               usedById: ticket.usedById,

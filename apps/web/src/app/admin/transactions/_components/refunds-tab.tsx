@@ -40,7 +40,7 @@ import { REFUND_STATUSES, rejectRefundSchema } from "@npa/validators";
 import { ImageUploadField } from "~/app/admin/_components/image-upload-field";
 import { RefundStatusBadge } from "~/app/admin/_components/status-badge";
 import { useListParams } from "~/app/admin/_lib/use-list-params";
-import { formatManila } from "~/lib/format";
+import { formatCentavos, formatManila } from "~/lib/format";
 import { useTRPC } from "~/trpc/react";
 import { isConflict, PAGE_SIZE } from "./lib";
 
@@ -156,11 +156,23 @@ function RefundCard({ refund }: { refund: Refund }) {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          Refund for order {refund.orderId}
+          Refund for order {refund.orderCode ?? refund.orderId}
           <RefundStatusBadge status={refund.status} />
         </CardTitle>
       </CardHeader>
       <CardContent className="grid gap-4 text-sm sm:grid-cols-2">
+        <div className="sm:col-span-2">
+          <p>
+            {refund.eventTitle ?? "Concert"}
+            {refund.totalAmount !== null
+              ? ` · ${formatCentavos(refund.totalAmount)}`
+              : ""}
+          </p>
+          <p className="text-muted-foreground">
+            {refund.buyerName ?? "Unknown buyer"}
+            {refund.buyerEmail ? ` · ${refund.buyerEmail}` : ""}
+          </p>
+        </div>
         <div>
           <p className="text-muted-foreground">Reason</p>
           <p>{refund.reason}</p>

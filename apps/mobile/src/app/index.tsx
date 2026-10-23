@@ -2,11 +2,17 @@ import { Redirect } from "expo-router";
 
 import { Loading } from "~/components/ui";
 import { authClient } from "~/utils/auth";
+import { usePermissions } from "~/utils/use-permissions";
 
-/** Entry gate: send authed users to the tabbed app, others to sign in. */
+/**
+ * Entry gate: staff/admin accounts → admin section, customers → the tabbed
+ * storefront, signed-out users → sign in.
+ */
 export default function Index() {
   const { data: session, isPending } = authClient.useSession();
-  if (isPending) return <Loading label="Loading…" />;
-  if (session?.user) return <Redirect href="/(tabs)/events" />;
-  return <Redirect href="/(auth)/sign-in" />;
+  const { isStaff, isLoading } = usePermissions();
+  if (isPending || isLoading) return <Loading label="Loading…" />;
+  if (!session?.user) return <Redirect href="/(auth)/sign-in" />;
+  if (isStaff) return <Redirect href="/admin" />;
+  return <Redirect href="/(tabs)/events" />;
 }

@@ -32,6 +32,7 @@ const NAV: NavItem[] = [
     anyOf: ["orders:read", "orders:review", "refunds:review"],
   },
   { href: "/admin/scanner", label: "QR Scanner", anyOf: ["tickets:scan"] },
+  { href: "/admin/scans", label: "Scans", anyOf: ["tickets:scan"] },
 ];
 
 export function AdminSidebar({

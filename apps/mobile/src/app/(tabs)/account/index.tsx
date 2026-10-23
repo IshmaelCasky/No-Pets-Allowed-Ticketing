@@ -4,13 +4,11 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Button, Card } from "~/components/ui";
 import { authClient } from "~/utils/auth";
-import { usePermissions } from "~/utils/use-permissions";
 
 export default function AccountScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { data: session } = authClient.useSession();
-  const { has } = usePermissions();
 
   const signOut = async () => {
     await authClient.signOut();
@@ -38,13 +36,6 @@ export default function AccountScreen() {
           variant="outline"
           onPress={() => router.push("/(tabs)/account/refunds")}
         />
-        {has("tickets:scan") ? (
-          <Button
-            label="Open scanner"
-            variant="outline"
-            onPress={() => router.push("/(tabs)/scanner")}
-          />
-        ) : null}
       </Card>
 
       <View className="mt-4">
