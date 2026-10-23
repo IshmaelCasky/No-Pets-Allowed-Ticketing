@@ -1,14 +1,13 @@
-import { eq } from "drizzle-orm";
-
 import type { Permission } from "./schema";
 import { db } from "./client";
-import { paymentMethod, PERMISSIONS, role } from "./schema";
+import { PERMISSIONS, role } from "./schema";
 
 /**
- * Idempotent seed: 5 system/staff roles + default (inactive) payment methods.
+ * Idempotent seed: the 5 system/staff roles.
  *
- * The Super Admin *user* is intentionally NOT created here — user creation is
- * handled by the lead via better-auth to avoid a db -> auth dependency cycle.
+ * Payment methods are no longer seeded — payments go through HitPay, not manual
+ * QR methods. The Super Admin *user* is created by the lead via better-auth to
+ * avoid a db -> auth dependency cycle.
  */
 
 const ALL: Permission[] = [...PERMISSIONS];
@@ -56,26 +55,6 @@ const ROLES: {
   },
 ];
 
-const PAYMENT_METHODS: {
-  label: string;
-  accountName: string;
-  accountNumber: string;
-  sortOrder: number;
-}[] = [
-  {
-    label: "GCash",
-    accountName: "No Pets Allowed",
-    accountNumber: "0000000000",
-    sortOrder: 0,
-  },
-  {
-    label: "Maya",
-    accountName: "No Pets Allowed",
-    accountNumber: "0000000000",
-    sortOrder: 1,
-  },
-];
-
 async function main() {
   // Roles — upsert keyed on unique `name`.
   for (const r of ROLES) {
@@ -96,30 +75,6 @@ async function main() {
         },
       });
     console.log(`  role: ${r.name} (${r.permissions.length} permissions)`);
-  }
-
-  // Payment methods — no unique constraint on label, so check-then-insert.
-  for (const pm of PAYMENT_METHODS) {
-    const existing = await db
-      .select({ id: paymentMethod.id })
-      .from(paymentMethod)
-      .where(eq(paymentMethod.label, pm.label))
-      .limit(1);
-
-    if (existing.length === 0) {
-      await db.insert(paymentMethod).values({
-        label: pm.label,
-        accountName: pm.accountName,
-        accountNumber: pm.accountNumber,
-        qrImageUrl: null,
-        instructions: null,
-        isActive: false,
-        sortOrder: pm.sortOrder,
-      });
-      console.log(`  payment method: ${pm.label} (created, inactive)`);
-    } else {
-      console.log(`  payment method: ${pm.label} (exists, skipped)`);
-    }
   }
 
   console.log("Seed complete.");

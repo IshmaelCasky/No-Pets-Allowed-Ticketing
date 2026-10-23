@@ -243,22 +243,6 @@ export const seat = pgTable(
 );
 
 /* -------------------------------------------------------------------------- */
-/*  payment_method                                                            */
-/* -------------------------------------------------------------------------- */
-
-export const paymentMethod = pgTable("payment_method", (t) => ({
-  id: id(),
-  label: t.text().notNull(),
-  accountName: t.text(),
-  accountNumber: t.text(),
-  qrImageUrl: t.text(),
-  instructions: t.text(),
-  isActive: t.boolean().notNull().default(true),
-  sortOrder: t.integer().notNull().default(0),
-  createdAt: createdAt(),
-}));
-
-/* -------------------------------------------------------------------------- */
 /*  order                                                                     */
 /* -------------------------------------------------------------------------- */
 
@@ -277,16 +261,11 @@ export const order = pgTable(
       .references(() => event.id, { onDelete: "restrict" }),
     status: orderStatus().notNull().default("pending_payment"),
     totalAmount: t.integer().notNull(),
-    paymentMethodId: t
-      .text()
-      .references(() => paymentMethod.id, { onDelete: "set null" }),
-    referenceNumber: t.text(),
-    proofImageKey: t.text(),
-    submittedAt: tz(),
-    reviewedById: t.text().references(() => user.id, { onDelete: "set null" }),
-    reviewedAt: tz(),
-    rejectionReason: t.text(),
-    resubmitCount: t.integer().notNull().default(0),
+    // HitPay payment gateway. Set when the payment request is created; the
+    // webhook flips the order to approved and records paidAt.
+    hitpayPaymentId: t.text(),
+    hitpayStatus: t.text(),
+    paidAt: tz(),
     expiresAt: tz(),
     createdAt: createdAt(),
   }),
@@ -294,16 +273,8 @@ export const order = pgTable(
     index("order_user_id_idx").on(table.userId),
     index("order_event_id_idx").on(table.eventId),
     index("order_status_idx").on(table.status),
-    index("order_payment_method_id_idx").on(table.paymentMethodId),
-    index("order_reviewed_by_id_idx").on(table.reviewedById),
+    index("order_hitpay_payment_id_idx").on(table.hitpayPaymentId),
     index("order_created_at_idx").on(table.createdAt),
-    // Duplicate-proof detection: a (method, reference) pair can appear once.
-    // Partial — only enforced once both are present.
-    uniqueIndex("order_payment_reference_unique")
-      .on(table.paymentMethodId, table.referenceNumber)
-      .where(
-        sql`${table.paymentMethodId} is not null and ${table.referenceNumber} is not null`,
-      ),
   ],
 );
 
@@ -544,28 +515,14 @@ export const seatRelations = relations(seat, ({ one, many }) => ({
   tickets: many(ticket),
 }));
 
-export const paymentMethodRelations = relations(paymentMethod, ({ many }) => ({
-  orders: many(order),
-}));
-
 export const orderRelations = relations(order, ({ one, many }) => ({
   user: one(user, {
     fields: [order.userId],
     references: [user.id],
-    relationName: "order_buyer",
   }),
   event: one(event, {
     fields: [order.eventId],
     references: [event.id],
-  }),
-  paymentMethod: one(paymentMethod, {
-    fields: [order.paymentMethodId],
-    references: [paymentMethod.id],
-  }),
-  reviewedBy: one(user, {
-    fields: [order.reviewedById],
-    references: [user.id],
-    relationName: "order_reviewer",
   }),
   items: many(orderItem),
   tickets: many(ticket),
@@ -663,8 +620,6 @@ export type SeatSection = typeof seatSection.$inferSelect;
 export type NewSeatSection = typeof seatSection.$inferInsert;
 export type Seat = typeof seat.$inferSelect;
 export type NewSeat = typeof seat.$inferInsert;
-export type PaymentMethod = typeof paymentMethod.$inferSelect;
-export type NewPaymentMethod = typeof paymentMethod.$inferInsert;
 export type Order = typeof order.$inferSelect;
 export type NewOrder = typeof order.$inferInsert;
 export type OrderItem = typeof orderItem.$inferSelect;

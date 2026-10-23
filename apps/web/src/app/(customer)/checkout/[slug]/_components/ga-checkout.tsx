@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { toast } from "@npa/ui/toast";
@@ -17,7 +16,6 @@ export function GaCheckout({
   maxPerOrder: number;
 }) {
   const trpc = useTRPC();
-  const router = useRouter();
   const [qty, setQty] = useState<Record<string, number>>({});
 
   const { data: tiers, isLoading } = useQuery(
@@ -26,8 +24,8 @@ export function GaCheckout({
 
   const createOrder = useMutation(
     trpc.order.create.mutationOptions({
-      onSuccess: (order) => {
-        router.push(`/orders/${order.code}`);
+      onSuccess: ({ paymentUrl }) => {
+        window.location.assign(paymentUrl);
       },
       onError: (err) => toast.error(err.message),
     }),

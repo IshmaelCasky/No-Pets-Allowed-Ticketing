@@ -75,9 +75,9 @@ export function OrdersTab() {
       cell: (o) => formatCentavos(o.totalAmount),
     },
     {
-      id: "reference",
-      header: "Reference",
-      cell: (o) => o.referenceNumber ?? "—",
+      id: "payment",
+      header: "Payment",
+      cell: (o) => o.hitpayStatus ?? "—",
     },
     {
       id: "created",

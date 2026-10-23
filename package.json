@@ -2,7 +2,7 @@
   "name": "nopetsticketing",
   "private": true,
   "engines": {
-    "node": "^22.21.0",
+    "node": ">=24",
     "pnpm": "^10.19.0"
   },
   "packageManager": "pnpm@10.19.0",
@@ -16,8 +16,8 @@
     "db:push": "turbo -F @npa/db push",
     "db:seed": "pnpm -F @npa/db seed && pnpm -F @npa/auth seed",
     "db:studio": "turbo -F @npa/db studio",
-    "dev": "turbo watch dev --continue",
-    "dev:web": "turbo watch dev -F @npa/web...",
+    "dev": "turbo run dev --continue",
+    "dev:web": "turbo run dev -F @npa/web...",
     "format": "turbo run format --continue -- --cache --cache-location .cache/.prettiercache",
     "format:fix": "turbo run format --continue -- --write --cache --cache-location .cache/.prettiercache",
     "lint": "turbo run lint --continue -- --cache --cache-location .cache/.eslintcache",

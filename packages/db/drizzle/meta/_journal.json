@@ -15,6 +15,13 @@
       "when": 1792514755879,
       "tag": "0001_blue_shadowcat",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792750271359,
+      "tag": "0002_hot_the_professor",
+      "breakpoints": true
     }
   ]
 }

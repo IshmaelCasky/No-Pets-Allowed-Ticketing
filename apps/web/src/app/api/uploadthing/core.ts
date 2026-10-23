@@ -13,11 +13,10 @@ const f = createUploadthing();
 /**
  * Shared UploadThing file router for the whole web app.
  *
- * - `paymentProof` / `refundProof` are PRIVATE (file keys only; the API
- *   resolves signed URLs so admins see all, customers see only their own).
- *   `customer-web` consumes `paymentProof` on the pay/upload-proof screen and
- *   `refundProof` is used by staff (Transactions → Refunds → Mark as paid).
- * - `eventPoster` / `paymentQr` are admin-only, gated by a permission key.
+ * - `refundProof` is PRIVATE (file keys only; the API resolves signed URLs so
+ *   admins see all, customers see only their own). It is used by staff
+ *   (Transactions → Refunds → Mark as paid).
+ * - `eventPoster` is admin-only, gated by a permission key.
  *
  * All routes: images only (jpg/png/webp), max 4 MB. Middleware enforces auth
  * via better-auth; admin routes additionally require a permission key.
@@ -65,16 +64,6 @@ async function requirePermission(key: PermissionKey) {
 }
 
 export const uploadRouter = {
-  /** Customer payment receipt (private). */
-  paymentProof: f(imageConstraints)
-    .middleware(async () => {
-      const user = await requireUser();
-      return { userId: user.id };
-    })
-    .onUploadComplete(({ metadata, file }) => {
-      return { uploadedBy: metadata.userId, key: file.key };
-    }),
-
   /** Staff refund transfer receipt (private). */
   refundProof: f(imageConstraints)
     .middleware(async () => {
@@ -89,16 +78,6 @@ export const uploadRouter = {
   eventPoster: f(publicImageConstraints)
     .middleware(async () => {
       const user = await requirePermission("events:write");
-      return { userId: user.id };
-    })
-    .onUploadComplete(({ metadata, file }) => {
-      return { uploadedBy: metadata.userId, url: file.ufsUrl, key: file.key };
-    }),
-
-  /** Payment-method QR image (admin). */
-  paymentQr: f(publicImageConstraints)
-    .middleware(async () => {
-      const user = await requirePermission("payment_methods:write");
       return { userId: user.id };
     })
     .onUploadComplete(({ metadata, file }) => {

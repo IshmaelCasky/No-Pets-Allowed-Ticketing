@@ -4,7 +4,7 @@ import { z } from "zod/v4";
 
 import type { db } from "@npa/db/client";
 import type { Order } from "@npa/db/schema";
-import { and, count, desc, eq, inArray, lte, ne, or, sql } from "@npa/db";
+import { and, count, desc, eq, inArray, lte, sql } from "@npa/db";
 import {
   event,
   order,
@@ -18,17 +18,32 @@ import {
   cancelOrderSchema,
   createOrderSchema,
   listOrdersSchema,
-  submitPaymentProofSchema,
 } from "@npa/validators";
 
 import type { Paginated } from "../stub";
 import { audit } from "../audit";
-import { generateOrderCode, signedProofUrl } from "../lib";
+import { OrderApprovedEmail, sendEmail } from "../emails";
+import { fulfillPaidOrderTx } from "../fulfill";
+import {
+  createPaymentRequest,
+  getPaymentRequest,
+  hitpayConfigured,
+} from "../hitpay";
+import { generateOrderCode } from "../lib";
 import {
   permissionProcedure,
   protectedProcedure,
   publicProcedure,
 } from "../trpc";
+
+/** App base URL for HitPay redirect/webhook callbacks. */
+function appBaseUrl(): string {
+  const base =
+    process.env.BETTER_AUTH_URL ??
+    process.env.NEXT_PUBLIC_APP_URL ??
+    "http://localhost:3000";
+  return base.replace(/\/$/, "");
+}
 
 /** A drizzle transaction handle (what `db.transaction` passes to its callback). */
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
@@ -38,62 +53,151 @@ const PAYMENT_WINDOW_MS = 30 * 60 * 1000;
 
 /** Statuses whose held seats/tier inventory are still reserved. */
 function releasableStatuses() {
-  return ["pending_payment", "for_review"] as const;
+  return ["pending_payment"] as const;
 }
 
 export const orderRouter = {
   /**
    * Create an order. Reserves seats/tier inventory in one transaction and sets
-   * the 30-minute payment window (`expiresAt`). Reserved seats taken mid-
+   * the 30-minute payment window (`expiresAt`), then creates a HitPay payment
+   * request and returns its hosted-checkout URL. Reserved seats taken mid-
    * checkout throw CONFLICT with the taken seat ids.
    */
   create: protectedProcedure
     .input(createOrderSchema)
-    .mutation(async ({ ctx, input }): Promise<Order> => {
-      const userId = ctx.session.user.id;
-      return ctx.db.transaction(async (tx) => {
-        const ev = await tx.query.event.findFirst({
-          where: eq(event.id, input.eventId),
-        });
-        if (!ev)
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Event not found",
+    .mutation(
+      async ({ ctx, input }): Promise<{ order: Order; paymentUrl: string }> => {
+        const userId = ctx.session.user.id;
+        const created = await ctx.db.transaction(async (tx) => {
+          const ev = await tx.query.event.findFirst({
+            where: eq(event.id, input.eventId),
           });
-        if (ev.status !== "published") {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Event is not open for sale",
-          });
-        }
-        if (ev.seatingMode !== input.mode) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: `Event uses ${ev.seatingMode} seating`,
-          });
-        }
-
-        const expiresAt = new Date(Date.now() + PAYMENT_WINDOW_MS);
-        const code = generateOrderCode();
-
-        if (input.mode === "ga") {
-          const totalQty = input.items.reduce((s, i) => s + i.quantity, 0);
-          if (totalQty > ev.maxPerOrder) {
+          if (!ev)
+            throw new TRPCError({
+              code: "NOT_FOUND",
+              message: "Event not found",
+            });
+          if (ev.status !== "published") {
             throw new TRPCError({
               code: "BAD_REQUEST",
-              message: `Max ${ev.maxPerOrder} tickets per order`,
+              message: "Event is not open for sale",
             });
           }
-          // Reject duplicate tier lines so FOR UPDATE + increments stay correct.
-          const seen = new Set<string>();
-          for (const line of input.items) {
-            if (seen.has(line.tierId)) {
+          if (ev.seatingMode !== input.mode) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: `Event uses ${ev.seatingMode} seating`,
+            });
+          }
+
+          const expiresAt = new Date(Date.now() + PAYMENT_WINDOW_MS);
+          const code = generateOrderCode();
+
+          if (input.mode === "ga") {
+            const totalQty = input.items.reduce((s, i) => s + i.quantity, 0);
+            if (totalQty > ev.maxPerOrder) {
               throw new TRPCError({
                 code: "BAD_REQUEST",
-                message: "Duplicate tier in order",
+                message: `Max ${ev.maxPerOrder} tickets per order`,
               });
             }
-            seen.add(line.tierId);
+            // Reject duplicate tier lines so FOR UPDATE + increments stay correct.
+            const seen = new Set<string>();
+            for (const line of input.items) {
+              if (seen.has(line.tierId)) {
+                throw new TRPCError({
+                  code: "BAD_REQUEST",
+                  message: "Duplicate tier in order",
+                });
+              }
+              seen.add(line.tierId);
+            }
+
+            const [orderRow] = await tx
+              .insert(order)
+              .values({
+                code,
+                userId,
+                eventId: ev.id,
+                status: "pending_payment",
+                totalAmount: 0,
+                expiresAt,
+              })
+              .returning();
+            if (!orderRow)
+              throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+            let total = 0;
+            for (const line of input.items) {
+              // Lock the tier row, then check capacity and increment reserved.
+              const [tier] = await tx
+                .select()
+                .from(ticketTier)
+                .where(eq(ticketTier.id, line.tierId))
+                .for("update");
+              if (!tier || tier.eventId !== ev.id) {
+                throw new TRPCError({
+                  code: "NOT_FOUND",
+                  message: "Ticket tier not found",
+                });
+              }
+              const now = new Date();
+              if (
+                (tier.salesStartAt && tier.salesStartAt > now) ||
+                (tier.salesEndAt && tier.salesEndAt < now)
+              ) {
+                throw new TRPCError({
+                  code: "BAD_REQUEST",
+                  message: `${tier.name} is not on sale`,
+                });
+              }
+              const remaining = tier.capacity - tier.reserved - tier.sold;
+              if (remaining < line.quantity) {
+                throw new TRPCError({
+                  code: "CONFLICT",
+                  message: `Only ${remaining} left for ${tier.name}`,
+                });
+              }
+              await tx
+                .update(ticketTier)
+                .set({ reserved: tier.reserved + line.quantity })
+                .where(eq(ticketTier.id, tier.id));
+              await tx.insert(orderItem).values({
+                orderId: orderRow.id,
+                tierId: tier.id,
+                quantity: line.quantity,
+                unitPrice: tier.price,
+              });
+              total += tier.price * line.quantity;
+            }
+
+            const [updated] = await tx
+              .update(order)
+              .set({ totalAmount: total })
+              .where(eq(order.id, orderRow.id))
+              .returning();
+            if (!updated)
+              throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+            await audit(
+              ctx,
+              {
+                action: "order.create",
+                entityType: "order",
+                entityId: updated.id,
+                after: updated,
+              },
+              tx,
+            );
+            return updated;
+          }
+
+          // reserved
+          const uniqueSeatIds = [...new Set(input.seatIds)];
+          if (uniqueSeatIds.length > ev.maxPerOrder) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: `Max ${ev.maxPerOrder} seats per order`,
+            });
           }
 
           const [orderRow] = await tx
@@ -109,48 +213,56 @@ export const orderRouter = {
             .returning();
           if (!orderRow) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
+          // Lock the chosen seats. Order by id for a stable lock order.
+          const seatRows = await tx
+            .select()
+            .from(seat)
+            .where(
+              and(eq(seat.eventId, ev.id), inArray(seat.id, uniqueSeatIds)),
+            )
+            .for("update");
+
+          if (seatRows.length !== uniqueSeatIds.length) {
+            throw new TRPCError({
+              code: "NOT_FOUND",
+              message: "Seat not found",
+            });
+          }
+          const taken = seatRows
+            .filter((s) => s.status !== "available")
+            .map((s) => s.id);
+          if (taken.length > 0) {
+            throw new TRPCError({
+              code: "CONFLICT",
+              message: "Some seats were just taken",
+              cause: { takenSeatIds: taken },
+            });
+          }
+
+          // Price each seat from its section.
+          const sectionIds = [...new Set(seatRows.map((s) => s.sectionId))];
+          const sections = await tx.query.seatSection.findMany({
+            where: inArray(seatSection.id, sectionIds),
+          });
+          const priceBySection = new Map(sections.map((s) => [s.id, s.price]));
+
           let total = 0;
-          for (const line of input.items) {
-            // Lock the tier row, then check capacity and increment reserved.
-            const [tier] = await tx
-              .select()
-              .from(ticketTier)
-              .where(eq(ticketTier.id, line.tierId))
-              .for("update");
-            if (!tier || tier.eventId !== ev.id) {
-              throw new TRPCError({
-                code: "NOT_FOUND",
-                message: "Ticket tier not found",
-              });
-            }
-            const now = new Date();
-            if (
-              (tier.salesStartAt && tier.salesStartAt > now) ||
-              (tier.salesEndAt && tier.salesEndAt < now)
-            ) {
-              throw new TRPCError({
-                code: "BAD_REQUEST",
-                message: `${tier.name} is not on sale`,
-              });
-            }
-            const remaining = tier.capacity - tier.reserved - tier.sold;
-            if (remaining < line.quantity) {
-              throw new TRPCError({
-                code: "CONFLICT",
-                message: `Only ${remaining} left for ${tier.name}`,
-              });
+          for (const s of seatRows) {
+            const price = priceBySection.get(s.sectionId);
+            if (price == null) {
+              throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
             }
             await tx
-              .update(ticketTier)
-              .set({ reserved: tier.reserved + line.quantity })
-              .where(eq(ticketTier.id, tier.id));
+              .update(seat)
+              .set({ status: "held", heldByOrderId: orderRow.id })
+              .where(eq(seat.id, s.id));
             await tx.insert(orderItem).values({
               orderId: orderRow.id,
-              tierId: tier.id,
-              quantity: line.quantity,
-              unitPrice: tier.price,
+              seatId: s.id,
+              quantity: 1,
+              unitPrice: price,
             });
-            total += tier.price * line.quantity;
+            total += price;
           }
 
           const [updated] = await tx
@@ -170,182 +282,90 @@ export const orderRouter = {
             tx,
           );
           return updated;
-        }
-
-        // reserved
-        const uniqueSeatIds = [...new Set(input.seatIds)];
-        if (uniqueSeatIds.length > ev.maxPerOrder) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: `Max ${ev.maxPerOrder} seats per order`,
-          });
-        }
-
-        const [orderRow] = await tx
-          .insert(order)
-          .values({
-            code,
-            userId,
-            eventId: ev.id,
-            status: "pending_payment",
-            totalAmount: 0,
-            expiresAt,
-          })
-          .returning();
-        if (!orderRow) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-
-        // Lock the chosen seats. Order by id for a stable lock order.
-        const seatRows = await tx
-          .select()
-          .from(seat)
-          .where(and(eq(seat.eventId, ev.id), inArray(seat.id, uniqueSeatIds)))
-          .for("update");
-
-        if (seatRows.length !== uniqueSeatIds.length) {
-          throw new TRPCError({ code: "NOT_FOUND", message: "Seat not found" });
-        }
-        const taken = seatRows
-          .filter((s) => s.status !== "available")
-          .map((s) => s.id);
-        if (taken.length > 0) {
-          throw new TRPCError({
-            code: "CONFLICT",
-            message: "Some seats were just taken",
-            cause: { takenSeatIds: taken },
-          });
-        }
-
-        // Price each seat from its section.
-        const sectionIds = [...new Set(seatRows.map((s) => s.sectionId))];
-        const sections = await tx.query.seatSection.findMany({
-          where: inArray(seatSection.id, sectionIds),
         });
-        const priceBySection = new Map(sections.map((s) => [s.id, s.price]));
 
-        let total = 0;
-        for (const s of seatRows) {
-          const price = priceBySection.get(s.sectionId);
-          if (price == null) {
-            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-          }
-          await tx
-            .update(seat)
-            .set({ status: "held", heldByOrderId: orderRow.id })
-            .where(eq(seat.id, s.id));
-          await tx.insert(orderItem).values({
-            orderId: orderRow.id,
-            seatId: s.id,
-            quantity: 1,
-            unitPrice: price,
+        if (!hitpayConfigured()) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Payments are not configured",
           });
-          total += price;
         }
-
-        const [updated] = await tx
+        const base = appBaseUrl();
+        const payment = await createPaymentRequest({
+          amount: created.totalAmount,
+          referenceNumber: created.code,
+          redirectUrl: `${base}/orders/${created.code}`,
+          webhook: `${base}/api/webhooks/hitpay`,
+          name: ctx.session.user.name,
+          email: ctx.session.user.email,
+        });
+        const [withPayment] = await ctx.db
           .update(order)
-          .set({ totalAmount: total })
-          .where(eq(order.id, orderRow.id))
+          .set({ hitpayPaymentId: payment.id, hitpayStatus: payment.status })
+          .where(eq(order.id, created.id))
           .returning();
-        if (!updated) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        return { order: withPayment ?? created, paymentUrl: payment.url };
+      },
+    ),
+
+  /**
+   * Reconcile an order against HitPay (fallback for the return page if the
+   * webhook is delayed). If HitPay reports the payment completed, fulfil the
+   * order (→ approved + tickets). Owner only.
+   */
+  syncPayment: protectedProcedure
+    .input(z.object({ code: z.string().min(1) }))
+    .mutation(async ({ ctx, input }): Promise<Order> => {
+      const existing = await ctx.db.query.order.findFirst({
+        where: eq(order.code, input.code),
+      });
+      if (!existing || existing.userId !== ctx.session.user.id) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+      if (
+        existing.status !== "pending_payment" ||
+        !existing.hitpayPaymentId ||
+        !hitpayConfigured()
+      ) {
+        return existing;
+      }
+
+      const hp = await getPaymentRequest(existing.hitpayPaymentId);
+      if (hp.status !== "completed") {
+        const [row] = await ctx.db
+          .update(order)
+          .set({ hitpayStatus: hp.status })
+          .where(eq(order.id, existing.id))
+          .returning();
+        return row ?? existing;
+      }
+
+      const result = await ctx.db.transaction(async (tx) => {
+        const r = await fulfillPaidOrderTx(tx, existing.id, hp.status);
         await audit(
           ctx,
           {
-            action: "order.create",
+            action: "order.paid",
             entityType: "order",
-            entityId: updated.id,
-            after: updated,
+            entityId: existing.id,
+            after: r.order,
           },
           tx,
         );
-        return updated;
+        return r;
       });
-    }),
 
-  /** Upload receipt + reference → `for_review` (re-submittable once). */
-  submitProof: protectedProcedure
-    .input(submitPaymentProofSchema)
-    .mutation(async ({ ctx, input }): Promise<Order> => {
-      const userId = ctx.session.user.id;
-      return ctx.db.transaction(async (tx) => {
-        const existing = await tx.query.order.findFirst({
-          where: eq(order.id, input.orderId),
+      if (!result.alreadyFulfilled && result.email) {
+        await sendEmail({
+          to: result.email,
+          subject: `Your order ${result.order.code} is confirmed`,
+          react: OrderApprovedEmail({
+            orderCode: result.order.code,
+            eventTitle: result.eventTitle,
+          }),
         });
-        if (existing?.userId !== userId) {
-          throw new TRPCError({ code: "NOT_FOUND" });
-        }
-        // Allowed from pending_payment (first proof) or rejected (one re-upload).
-        if (
-          existing.status !== "pending_payment" &&
-          existing.status !== "rejected"
-        ) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Order is not awaiting payment",
-          });
-        }
-        if (existing.expiresAt && existing.expiresAt < new Date()) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Payment window has closed",
-          });
-        }
-        if (existing.status === "rejected" && existing.resubmitCount >= 1) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "You have already re-submitted this order once",
-          });
-        }
-
-        // Duplicate receipt guard — a friendly CONFLICT instead of the raw
-        // unique-violation 500 from the (paymentMethodId, referenceNumber) index.
-        const dup = await tx.query.order.findFirst({
-          where: and(
-            eq(order.paymentMethodId, input.paymentMethodId),
-            eq(order.referenceNumber, input.referenceNumber),
-            ne(order.id, input.orderId),
-          ),
-          columns: { id: true },
-        });
-        if (dup) {
-          throw new TRPCError({
-            code: "CONFLICT",
-            message:
-              "This reference number was already submitted for this payment method",
-          });
-        }
-
-        const resubmit = existing.status === "rejected";
-        let row;
-        try {
-          [row] = await tx
-            .update(order)
-            .set({
-              status: "for_review",
-              paymentMethodId: input.paymentMethodId,
-              referenceNumber: input.referenceNumber,
-              proofImageKey: input.proofImageKey,
-              submittedAt: new Date(),
-              rejectionReason: null,
-              resubmitCount: resubmit
-                ? existing.resubmitCount + 1
-                : existing.resubmitCount,
-            })
-            .where(eq(order.id, input.orderId))
-            .returning();
-        } catch (e) {
-          // Concurrent submit lost the race against the unique index.
-          if ((e as { code?: string }).code === "23505") {
-            throw new TRPCError({
-              code: "CONFLICT",
-              message:
-                "This reference number was already submitted for this payment method",
-            });
-          }
-          throw e;
-        }
-        if (!row) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-        return row;
-      });
+      }
+      return result.order;
     }),
 
   /* ---------------------------- customer reads ---------------------------- */
@@ -382,32 +402,6 @@ export const orderRouter = {
       return row;
     }),
 
-  /** Short-lived signed URL for an order's payment proof. Owner or orders:read. */
-  proofUrl: protectedProcedure
-    .input(z.object({ orderId: z.string().min(1) }))
-    .query(async ({ ctx, input }): Promise<{ url: string | null }> => {
-      const row = await ctx.db.query.order.findFirst({
-        where: eq(order.id, input.orderId),
-        columns: { userId: true, proofImageKey: true },
-      });
-      if (!row) throw new TRPCError({ code: "NOT_FOUND" });
-      if (row.userId !== ctx.session.user.id) {
-        const u = ctx.session.user as typeof ctx.session.user & {
-          roleId?: string | null;
-        };
-        const roleRow = u.roleId
-          ? await ctx.db.query.role.findFirst({
-              where: eq(role.id, u.roleId),
-              columns: { permissions: true },
-            })
-          : null;
-        if (!roleRow?.permissions.includes("orders:read")) {
-          throw new TRPCError({ code: "FORBIDDEN" });
-        }
-      }
-      return { url: await signedProofUrl(row.proofImageKey) };
-    }),
-
   /* ----------------------------- admin orders ----------------------------- */
   /** Search all orders by code / reference / buyer. */
   adminList: permissionProcedure("orders:read")
@@ -417,12 +411,7 @@ export const orderRouter = {
       if (input.status) filters.push(eq(order.status, input.status));
       if (input.eventId) filters.push(eq(order.eventId, input.eventId));
       if (input.search) {
-        filters.push(
-          or(
-            sql`${order.code} ilike ${`%${input.search}%`}`,
-            sql`${order.referenceNumber} ilike ${`%${input.search}%`}`,
-          ),
-        );
+        filters.push(sql`${order.code} ilike ${`%${input.search}%`}`);
       }
       const where = filters.length ? and(...filters) : undefined;
       const offset = (input.page - 1) * input.pageSize;
@@ -453,10 +442,7 @@ export const orderRouter = {
           where: eq(order.id, input.id),
         });
         if (!before) throw new TRPCError({ code: "NOT_FOUND" });
-        if (
-          before.status !== "pending_payment" &&
-          before.status !== "for_review"
-        ) {
+        if (before.status !== "pending_payment") {
           throw new TRPCError({
             code: "BAD_REQUEST",
             message: "Only unpaid orders can be cancelled",
@@ -465,10 +451,7 @@ export const orderRouter = {
         await releaseInventory(tx, before.id);
         const [row] = await tx
           .update(order)
-          .set({
-            status: "cancelled",
-            rejectionReason: input.note ?? null,
-          })
+          .set({ status: "cancelled" })
           .where(eq(order.id, input.id))
           .returning();
         if (!row) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });

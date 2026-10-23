@@ -1,6 +1,6 @@
 # No Pets Allowed — Concert Ticketing System
 
-Ticketing platform for **No Pets Allowed** concerts. Customers pay manually via a posted QR code (GCash/Maya/bank), upload a receipt image + reference number, and staff approve it. Approved orders produce QR tickets that are scanned at the gate. Each event is either **general admission (tiers)** or **reserved seating (seat map)**, chosen per event by the admin. Customers can request refunds in-app.
+Ticketing platform for **No Pets Allowed** concerts. Customers pay online via **HitPay** (hosted checkout; sandbox for now), and a HitPay webhook auto-confirms the order. Approved orders produce QR tickets that are scanned at the gate. Each event is either **general admission (tiers)** or **reserved seating (seat map)**, chosen per event by the admin. Customers can request refunds in-app (manual transfer payout).
 
 Read this whole file before writing code. Follow the **Orchestration** section for how work is split across subagents.
 
@@ -55,15 +55,17 @@ Run `pnpm typecheck && pnpm lint` before declaring any task done.
 ## Domain rules (non-negotiable)
 
 ### Order lifecycle
-`pending_payment` → `for_review` → `approved` | `rejected` | `expired` | `cancelled`; `approved` → `refunded`
+`pending_payment` → `approved` | `expired` | `cancelled`; `approved` → `refunded`
 
-- Creating an order **reserves** seats immediately and sets `expiresAt` (payment window).
-- Customer uploads receipt + reference → `for_review`.
-- Staff approve → `approved`, seats move `reserved` → `sold`, one `ticket` per seat is generated, email sent.
-- Staff reject (reason required) → `rejected`; customer may re-upload **once** before `expiresAt` (→ `for_review`).
-- Window passes with no valid proof → `expired`, reserved seats released (cron every 5 min).
+Payment is handled by **HitPay** (hosted checkout), not manual proof + staff review.
+
+- Creating an order **reserves** seats immediately, sets `expiresAt` (payment window), and creates a HitPay payment request; the customer is redirected to HitPay's checkout URL.
+- HitPay confirms payment via webhook → `approved`, seats move `reserved` → `sold`, one `ticket` per seat is generated, `paidAt` set, email sent. A `syncPayment` poll reconciles if the webhook is delayed.
+- Window passes with no completed payment → `expired`, reserved seats released (cron every 5 min). Unpaid orders can also be `cancelled` (releases inventory).
 
 - Approved order with an approved refund → `refunded` (see Refunds).
+
+> Note: the `order_status` enum still contains legacy `for_review`/`rejected` values; they are unused under the HitPay flow.
 
 ### Ticket lifecycle
 `active` → `used`, or `void`. First valid scan marks `used` with `usedAt` + `usedById`.
@@ -86,7 +88,7 @@ Run `pnpm typecheck && pnpm lint` before declaring any task done.
 - Used tickets block a refund request. Email sent on every refund status change.
 
 ### Concurrency
-Approve/reject is a conditional update `WHERE status = 'for_review'`. Zero rows updated → throw `CONFLICT` ("already reviewed").
+Payment fulfilment is a conditional update `WHERE status = 'pending_payment'` (webhook and the `syncPayment` poll can race). Zero rows updated → the order was already fulfilled; the second caller is a no-op.
 
 ### Money
 Store as integer centavos. Format as `₱1,234.00` only at the UI layer.
@@ -98,11 +100,14 @@ QR encodes only `ticket.token` (random 128-bit, base64url, unique). Never encode
 Scanner selects an event. Each scan → write a `scan_log` row (always, including failures) with result:
 `valid` | `already_used` | `wrong_event` | `void` | `not_found`. `already_used` responses include when and by whom.
 
-### Payment and refund proofs
-Private UploadThing routes (`paymentProof`, `refundProof`), images only (jpg/png/webp), max 4 MB. Viewed via signed URLs: admins see all, customers see only their own. Unique index on `(paymentMethodId, referenceNumber)`; review screen flags duplicates.
+### Payment
+Payment runs through HitPay (`packages/api/src/hitpay.ts`): `order.create` creates a payment request and returns the hosted-checkout URL; the `/api/webhooks/hitpay` route verifies the HMAC signature and fulfils the order. Sandbox env: `HITPAY_API_KEY`, `HITPAY_SALT`, `HITPAY_API_URL`.
+
+### Refund proofs
+The refund transfer receipt still uses a private UploadThing route (`refundProof`), images only (jpg/png/webp), max 4 MB, viewed via signed URLs (`refund.proofUrl`): staff with `refunds:review` see all, the customer sees their own once paid. (The old `paymentProof`/`paymentQr` routes were removed with the manual flow.)
 
 ### Notifications
-Email only (Resend): order approved (link to tickets), order rejected (reason), order expired, refund approved / rejected / paid. Templates with React Email in `packages/api/src/emails`.
+Email only (Resend): order confirmed (link to tickets), order expired, refund approved / rejected / paid. Templates with React Email in `packages/api/src/emails`.
 
 ---
 
@@ -118,8 +123,7 @@ better-auth tables: `user`, `session`, `account`, `verification` (generate with 
 | `ticket_tier` | id, eventId, name, price, capacity, reserved, sold, salesStartAt, salesEndAt, sortOrder (GA events) |
 | `seat_section` | id, eventId, name, price, rows, seatsPerRow, rowLabelStyle (`alpha`/`numeric`), color, sortOrder (reserved events) |
 | `seat` | id, sectionId, eventId, rowLabel, number, label (e.g. `VIP-B12`), status (`available`/`held`/`sold`/`blocked`), heldByOrderId; unique (sectionId, rowLabel, number) |
-| `payment_method` | id, label, accountName, accountNumber, qrImageUrl, instructions, isActive, sortOrder |
-| `order` | id, code (`NPA-XXXXX`, unique), userId, eventId, status, totalAmount, paymentMethodId, referenceNumber, proofImageKey, submittedAt, reviewedById, reviewedAt, rejectionReason, resubmitCount, expiresAt, createdAt |
+| `order` | id, code (`NPA-XXXXX`, unique), userId, eventId, status, totalAmount, hitpayPaymentId, hitpayStatus, paidAt, expiresAt, createdAt |
 | `order_item` | id, orderId, tierId (nullable), seatId (nullable), quantity, unitPrice — exactly one of tierId/seatId set (CHECK) |
 | `ticket` | id, orderId, eventId, tierId (nullable), seatId (nullable), holderName, token (unique), status, usedAt, usedById, createdAt; partial unique on seatId where status ≠ `void` |
 | `refund_request` | id, orderId, userId, reason, payoutMethod, payoutAccountName, payoutAccountNumber, status, reviewedById, reviewedAt, rejectionReason, payoutReference, payoutProofKey, paidAt, createdAt; partial unique on orderId where status in (`requested`,`approved`) |
@@ -158,10 +162,8 @@ All list screens: shadcn DataTable with server-side pagination, search, filters.
    - GA: ticket tiers (price, capacity, sales window), live sold/reserved/remaining.
    - Reserved: **grid builder** — add sections (name, price, rows, seats per row, row label style, color), preview the grid, click seats to block/unblock, drag sections to reorder; live map of available/held/sold/blocked.
 6. **Transactions** — tabs:
-   - **Payment Review** — queue oldest first, receipt zoom beside expected amount + reference, duplicate flag, approve/reject.
-   - **Orders** — search all orders by code/reference/buyer, cancel order with note.
+   - **Orders** — search all orders by code/buyer, see HitPay payment status, cancel unpaid orders.
    - **Refunds** — request queue (reason, order, payout details), approve/reject, then mark paid with transfer receipt + reference.
-   - **Payment Options** — add/edit/reorder methods, upload/replace QR image, toggle active.
 7. **QR Scanner** — event picker, camera scan, full-screen green/red result + sound, manual code entry, live check-in counter, scan history.
 
 ## Customer surfaces
@@ -172,7 +174,7 @@ All list screens: shadcn DataTable with server-side pagination, search, filters.
 | Events list / detail | ✓ | ✓ |
 | Sign in / sign up | ✓ | ✓ |
 | Checkout — GA: tier + qty; Reserved: seat picker (sections, legend, zoom/pan, max `maxPerOrder` seats) | ✓ | ✓ |
-| Pay & upload proof (QR per method, amount, countdown, receipt upload, reference field) | ✓ | ✓ |
+| Pay via HitPay hosted checkout (redirect out, then a payment-status/return screen that reconciles via `syncPayment`) | ✓ | ✓ |
 | My Tickets (grouped by status) | ✓ | ✓ (cache approved tickets for offline display) |
 | Ticket detail (full-screen QR, seat label if reserved, editable holder name) | ✓ | ✓ (brightness boost) |
 | Request refund (reason + payout account) and refund status | ✓ | ✓ |
@@ -181,7 +183,7 @@ All list screens: shadcn DataTable with server-side pagination, search, filters.
 
 ## Landing page
 
-Dark, bold concert aesthetic. Sections: nav → hero (next show, CTA) → upcoming shows cards → featured show countdown + tier cards → How to buy (Pay via QR → Upload receipt → Get QR ticket) → about/gallery → FAQ → footer. Pull live data from `event`. "How to buy" and FAQ must mention the 30-minute payment window and the refund cutoff. Reference designs: `docs/design/` (screenshots of the Dribbble shots — Tiketin landing page and Musician Concerts website). If that folder is empty, build the structure and leave styling tokens in one theme file.
+Dark, bold concert aesthetic. Sections: nav → hero (next show, CTA) → upcoming shows cards → featured show countdown + tier cards → How to buy (Pick seats/tier → Pay via HitPay → Get QR ticket) → about/gallery → FAQ → footer. Pull live data from `event`. "How to buy" and FAQ must mention the 30-minute payment window and the refund cutoff. Reference designs: `docs/design/` (screenshots of the Dribbble shots — Tiketin landing page and Musician Concerts website). If that folder is empty, build the structure and leave styling tokens in one theme file.
 
 ---
 
@@ -190,6 +192,7 @@ Dark, bold concert aesthetic. Sections: nav → hero (next show, CTA) → upcomi
 | Topic | Decision |
 | --- | --- |
 | Mobile | Expo app for customers + role-gated staff scanner |
+| Payment | HitPay hosted checkout (sandbox for now), webhook-confirmed; no manual proof/review |
 | Payment window | 30 minutes from order creation (seats/tiers held during it) |
 | Max tickets per order | `event.maxPerOrder`, default 4 |
 | Holder name per ticket | Optional; defaults to buyer name, editable per ticket |
@@ -220,7 +223,7 @@ The lead agent (main session) owns planning, shared contracts, and integration. 
 | --- | --- | --- |
 | `api-builder` | `packages/api/src/routers/**` (bodies only), `packages/api/src/emails/**` | order, review, refund, seat map, ticket, scan, event, payment method, user, role, audit procedures + emails + tests |
 | `admin-web` | `apps/web/app/admin/**`, `packages/ui/**` | all 7 admin modules |
-| `customer-web` | `apps/web/app/(public)/**`, `apps/web/app/(customer)/**`, `apps/web/app/(auth)/**` | landing, events, checkout, upload proof, My Tickets |
+| `customer-web` | `apps/web/app/(public)/**`, `apps/web/app/(customer)/**`, `apps/web/app/(auth)/**` | landing, events, checkout, HitPay redirect + payment status, My Tickets |
 | `mobile-app` | `apps/mobile/**` | customer app + scanner mode |
 
 Rules for every subagent:
@@ -232,7 +235,7 @@ Rules for every subagent:
 1. Merge worktrees in order: `api-builder` → `admin-web` → `customer-web` → `mobile-app`.
 2. Apply any requested contract changes, re-run typecheck.
 3. Run `reviewer` subagent (fresh context) against the Domain rules section; fix findings.
-4. Smoke-test both seating modes: seed → create GA event and reserved event (grid builder) → buy (tiers / pick seats) → upload proof → approve → ticket shows → scan valid → scan again shows already used. Then: request refund → approve (tickets void, seats free again) → mark paid with proof → order `refunded`.
+4. Smoke-test both seating modes: seed → create GA event and reserved event (grid builder) → buy (tiers / pick seats) → pay via HitPay (webhook/`syncPayment` fulfils) → ticket shows → scan valid → scan again shows already used. Then: request refund → approve (tickets void, seats free again) → mark paid with proof → order `refunded`.
 
 ---
 

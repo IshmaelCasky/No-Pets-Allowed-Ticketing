@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { Seat, SeatSection } from "@npa/db/schema";
@@ -21,7 +20,6 @@ export function ReservedCheckout({
   maxPerOrder: number;
 }) {
   const trpc = useTRPC();
-  const router = useRouter();
   const queryClient = useQueryClient();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [zoom, setZoom] = useState(1);
@@ -39,8 +37,8 @@ export function ReservedCheckout({
 
   const createOrder = useMutation(
     trpc.order.create.mutationOptions({
-      onSuccess: (order) => {
-        router.push(`/orders/${order.code}`);
+      onSuccess: ({ paymentUrl }) => {
+        window.location.assign(paymentUrl);
       },
       onError: async (err) => {
         if (err.data?.code === "CONFLICT") {

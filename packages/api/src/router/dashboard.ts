@@ -6,7 +6,7 @@ import { event, order, ticket } from "@npa/db/schema";
 import { permissionProcedure } from "../trpc";
 
 export interface DashboardSummary {
-  pendingReviewCount: number;
+  pendingPaymentCount: number;
   approvedRevenue: number; // centavos
   checkInsToday: number;
   ticketsSoldByEvent: {
@@ -28,7 +28,7 @@ export const dashboardRouter = {
           ctx.db
             .select({ value: count() })
             .from(order)
-            .where(eq(order.status, "for_review")),
+            .where(eq(order.status, "pending_payment")),
           ctx.db
             .select({ value: sum(order.totalAmount) })
             .from(order)
@@ -57,7 +57,7 @@ export const dashboardRouter = {
         ]);
 
       return {
-        pendingReviewCount: pendingRow?.value ?? 0,
+        pendingPaymentCount: pendingRow?.value ?? 0,
         approvedRevenue: Number(revenueRow?.value ?? 0),
         checkInsToday: checkInRow?.value ?? 0,
         ticketsSoldByEvent: soldRows.map((r) => ({

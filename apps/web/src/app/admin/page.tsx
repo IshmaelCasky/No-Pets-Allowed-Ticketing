@@ -28,7 +28,7 @@ export default async function DashboardPage() {
   );
 
   const stats = [
-    { label: "Pending review", value: String(summary.pendingReviewCount) },
+    { label: "Pending payment", value: String(summary.pendingPaymentCount) },
     {
       label: "Approved revenue",
       value: formatCentavos(summary.approvedRevenue),
