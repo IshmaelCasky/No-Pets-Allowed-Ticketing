@@ -16,7 +16,6 @@ export function TicketView({
   token,
   status,
   holderName,
-  seatLabel,
   eventTitle,
   usedAt,
 }: {
@@ -24,7 +23,6 @@ export function TicketView({
   token: string;
   status: string;
   holderName: string | null;
-  seatLabel: string | null;
   eventTitle: string;
   usedAt: string | null;
 }) {
@@ -84,12 +82,6 @@ export function TicketView({
         ) : (
           <p className="mt-3 text-xs text-[oklch(0.72_0.19_25)]">
             This ticket is void.
-          </p>
-        )}
-
-        {seatLabel && (
-          <p className="mt-4 font-mono text-lg font-bold text-[oklch(0.82_0.14_75)]">
-            {seatLabel}
           </p>
         )}
       </div>
@@ -158,12 +150,7 @@ export function TicketView({
           aria-modal="true"
         >
           <QRCodeSVG value={token} size={320} level="M" />
-          {seatLabel && (
-            <p className="mt-6 font-mono text-2xl font-black text-black">
-              {seatLabel}
-            </p>
-          )}
-          <p className="mt-2 text-sm text-neutral-500">{eventTitle}</p>
+          <p className="mt-6 text-sm text-neutral-500">{eventTitle}</p>
           <button
             type="button"
             className="mt-8 rounded-full border border-neutral-300 px-6 py-2 text-sm font-semibold text-black"

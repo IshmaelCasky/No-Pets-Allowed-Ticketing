@@ -6,13 +6,6 @@ import type { RouterOutputs } from "@npa/api";
 import { Button } from "@npa/ui/button";
 import { Field, FieldError, FieldLabel } from "@npa/ui/field";
 import { Input } from "@npa/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@npa/ui/select";
 import { Textarea } from "@npa/ui/textarea";
 import { createEventSchema } from "@npa/validators";
 
@@ -36,20 +29,16 @@ interface EventFormValues {
   lineup?: string;
   description?: string;
   posterUrl?: string;
-  seatingMode: "ga" | "reserved";
   maxPerOrder: number;
   refundCutoffDays: number;
 }
 
 export function EventForm({
   event,
-  seatingModeLocked,
   onSubmit,
   isPending,
 }: {
   event?: NonNullable<Event>;
-  /** Locked once any order exists for the event. */
-  seatingModeLocked?: boolean;
   onSubmit: (values: {
     title: string;
     slug: string;
@@ -59,7 +48,6 @@ export function EventForm({
     lineup?: string;
     description?: string;
     posterUrl?: string;
-    seatingMode: "ga" | "reserved";
     maxPerOrder: number;
     refundCutoffDays: number;
   }) => void;
@@ -75,7 +63,6 @@ export function EventForm({
       lineup: event?.lineup ?? "",
       description: event?.description ?? "",
       posterUrl: event?.posterUrl ?? "",
-      seatingMode: event?.seatingMode ?? "ga",
       maxPerOrder: event?.maxPerOrder ?? 4,
       refundCutoffDays: event?.refundCutoffDays ?? 7,
     },
@@ -93,7 +80,6 @@ export function EventForm({
       lineup: blankToUndefined(values.lineup),
       description: blankToUndefined(values.description),
       posterUrl: blankToUndefined(values.posterUrl),
-      seatingMode: values.seatingMode,
       maxPerOrder: Number(values.maxPerOrder),
       refundCutoffDays: Number(values.refundCutoffDays),
     });
@@ -178,30 +164,7 @@ export function EventForm({
         />
       </Field>
 
-      <div className="grid grid-cols-3 gap-4">
-        <Field>
-          <FieldLabel>Seating mode</FieldLabel>
-          <Select
-            value={form.watch("seatingMode")}
-            onValueChange={(v) =>
-              form.setValue("seatingMode", v as "ga" | "reserved")
-            }
-            disabled={seatingModeLocked}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ga">General admission</SelectItem>
-              <SelectItem value="reserved">Reserved seating</SelectItem>
-            </SelectContent>
-          </Select>
-          {seatingModeLocked && (
-            <p className="text-muted-foreground text-xs">
-              Locked — orders already exist.
-            </p>
-          )}
-        </Field>
+      <div className="grid grid-cols-2 gap-4">
         <Field>
           <FieldLabel htmlFor="maxPerOrder">Max per order</FieldLabel>
           <Input

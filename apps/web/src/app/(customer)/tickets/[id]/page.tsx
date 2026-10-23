@@ -17,12 +17,7 @@ export default async function TicketDetailPage({
   const ticket = await caller.ticket.byId({ id });
   if (!ticket) notFound();
 
-  // Resolve display labels (seat label + event title) via public lookups.
-  let seatLabel: string | null = null;
-  if (ticket.seatId) {
-    const map = await caller.seatMap.forEvent({ eventId: ticket.eventId });
-    seatLabel = map.seats.find((s) => s.id === ticket.seatId)?.label ?? null;
-  }
+  // Resolve display label (event title) via public lookup.
   const publicEvents = await caller.event.publicList();
   const eventTitle =
     publicEvents.find((e) => e.id === ticket.eventId)?.title ?? "Your concert";
@@ -40,7 +35,6 @@ export default async function TicketDetailPage({
         token={ticket.token}
         status={ticket.status}
         holderName={ticket.holderName}
-        seatLabel={seatLabel}
         eventTitle={eventTitle}
         usedAt={ticket.usedAt ? ticket.usedAt.toISOString() : null}
       />

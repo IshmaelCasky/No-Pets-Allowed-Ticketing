@@ -67,11 +67,6 @@ export function EventsClient() {
     },
     { id: "venue", header: "Venue", cell: (r) => r.venue ?? "—" },
     {
-      id: "mode",
-      header: "Mode",
-      cell: (r) => (r.seatingMode === "ga" ? "GA" : "Reserved"),
-    },
-    {
       id: "status",
       header: "Status",
       cell: (r) => <EventStatusBadge status={r.status} />,

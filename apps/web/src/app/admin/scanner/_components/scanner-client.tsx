@@ -1,7 +1,7 @@
 "use client";
 
 import type { IDetectedBarcode } from "@yudiel/react-qr-scanner";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Scanner } from "@yudiel/react-qr-scanner";
 
@@ -94,16 +94,6 @@ export function ScannerClient() {
       { enabled: !!eventId },
     ),
   );
-
-  // Seat map → seatId → label, for showing the seat on valid reserved scans.
-  const seatMapQuery = useQuery(
-    trpc.seatMap.forEvent.queryOptions({ eventId }, { enabled: !!eventId }),
-  );
-  const seatLabels = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const s of seatMapQuery.data?.seats ?? []) map.set(s.id, s.label);
-    return map;
-  }, [seatMapQuery.data]);
 
   const showResult = useCallback(
     (res: ScanResponse) => {
@@ -285,15 +275,7 @@ export function ScannerClient() {
       )}
 
       {overlay && (
-        <ResultOverlay
-          res={overlay}
-          seatLabel={
-            overlay.ticket?.seatId
-              ? (seatLabels.get(overlay.ticket.seatId) ?? null)
-              : null
-          }
-          onDismiss={() => setOverlay(null)}
-        />
+        <ResultOverlay res={overlay} onDismiss={() => setOverlay(null)} />
       )}
     </div>
   );
@@ -301,11 +283,9 @@ export function ScannerClient() {
 
 function ResultOverlay({
   res,
-  seatLabel,
   onDismiss,
 }: {
   res: ScanResponse;
-  seatLabel: string | null;
   onDismiss: () => void;
 }) {
   const ok = res.result === "valid";
@@ -327,10 +307,7 @@ function ResultOverlay({
         {ok ? "Valid" : res.result.replace(/_/g, " ")}
       </p>
 
-      {seatLabel && <p className="text-3xl font-semibold">{seatLabel}</p>}
-      {!seatLabel && holder && (
-        <p className="text-3xl font-semibold">{holder}</p>
-      )}
+      {holder && <p className="text-3xl font-semibold">{holder}</p>}
 
       {res.result === "already_used" && (
         <p className="text-lg">

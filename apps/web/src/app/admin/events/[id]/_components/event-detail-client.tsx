@@ -32,7 +32,6 @@ import { EventForm } from "../../_components/event-form";
 import { PageHeader } from "../../../_components/page-header";
 import { EventStatusBadge } from "../../../_components/status-badge";
 import { downloadCsv } from "../../../_lib/download-csv";
-import { GridBuilder } from "./grid-builder";
 import { TierEditor } from "./tier-editor";
 
 export function EventDetailClient({ eventId }: { eventId: string }) {
@@ -44,13 +43,6 @@ export function EventDetailClient({ eventId }: { eventId: string }) {
   const { data: event } = useQuery(
     trpc.event.byId.queryOptions({ id: eventId }),
   );
-  const { data: tiers } = useQuery(
-    trpc.event.tiersByEvent.queryOptions({ eventId }),
-  );
-  const { data: seatMap } = useQuery(
-    trpc.seatMap.forEvent.queryOptions({ eventId }),
-  );
-
   const invalidate = () => {
     void queryClient.invalidateQueries(
       trpc.event.byId.queryFilter({ id: eventId }),
@@ -90,13 +82,6 @@ export function EventDetailClient({ eventId }: { eventId: string }) {
   );
 
   if (!event) return null;
-
-  // Seating mode is locked once committed inventory exists (orders present).
-  const hasCommittedGa = (tiers ?? []).some((t) => t.reserved + t.sold > 0);
-  const hasCommittedSeats = (seatMap?.seats ?? []).some(
-    (s) => s.status === "held" || s.status === "sold",
-  );
-  const seatingModeLocked = hasCommittedGa || hasCommittedSeats;
 
   const publishLabel = event.status === "published" ? "Unpublish" : "Publish";
   const nextStatus = event.status === "published" ? "draft" : "published";
@@ -141,7 +126,6 @@ export function EventDetailClient({ eventId }: { eventId: string }) {
                 </DialogHeader>
                 <EventForm
                   event={event}
-                  seatingModeLocked={seatingModeLocked}
                   isPending={update.isPending}
                   onSubmit={(values) =>
                     update.mutate({ id: eventId, ...values })
@@ -183,10 +167,6 @@ export function EventDetailClient({ eventId }: { eventId: string }) {
         </CardHeader>
         <CardContent className="grid gap-2 text-sm sm:grid-cols-2">
           <div>
-            <span className="text-muted-foreground">Seating mode: </span>
-            {event.seatingMode === "ga" ? "General admission" : "Reserved"}
-          </div>
-          <div>
             <span className="text-muted-foreground">Starts: </span>
             {formatManila(event.startsAt)}
           </div>
@@ -209,11 +189,7 @@ export function EventDetailClient({ eventId }: { eventId: string }) {
         </CardContent>
       </Card>
 
-      {event.seatingMode === "ga" ? (
-        <TierEditor eventId={eventId} />
-      ) : (
-        <GridBuilder eventId={eventId} />
-      )}
+      <TierEditor eventId={eventId} />
     </div>
   );
 }

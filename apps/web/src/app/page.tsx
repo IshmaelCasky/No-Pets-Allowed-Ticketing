@@ -13,14 +13,9 @@ export default async function LandingPage() {
 
   const upcoming = events; // publicList is already published + sorted by date
   const featured = upcoming[0] ?? null;
-  const featuredTiers =
-    featured?.seatingMode === "ga"
-      ? await caller.event.tiersByEvent({ eventId: featured.id })
-      : [];
-  const featuredSections =
-    featured?.seatingMode === "reserved"
-      ? (await caller.seatMap.forEvent({ eventId: featured.id })).sections
-      : [];
+  const featuredTiers = featured
+    ? await caller.event.tiersByEvent({ eventId: featured.id })
+    : [];
 
   return (
     <div className="dark flex min-h-screen flex-col bg-[oklch(0.16_0.012_250)] text-[oklch(0.97_0.006_250)]">
@@ -128,47 +123,40 @@ export default async function LandingPage() {
               </div>
               <div>
                 <h3 className="text-sm font-semibold tracking-widest text-[oklch(0.68_0.018_250)] uppercase">
-                  {featured.seatingMode === "ga" ? "Tiers" : "Sections"}
+                  Ticket types
                 </h3>
                 <ul className="mt-4 divide-y divide-[oklch(0.3_0.018_250)]/60 rounded-xl border border-[oklch(0.3_0.018_250)]">
-                  {(featured.seatingMode === "ga"
-                    ? featuredTiers.map((t) => ({
-                        id: t.id,
-                        name: t.name,
-                        price: t.price,
-                        note:
-                          t.capacity - t.reserved - t.sold <= 0
-                            ? "Sold out"
-                            : `${t.capacity - t.reserved - t.sold} left`,
-                      }))
-                    : featuredSections.map((s) => ({
-                        id: s.id,
-                        name: s.name,
-                        price: s.price,
-                        note: "Reserved seating",
-                      }))
-                  ).map((row) => (
-                    <li
-                      key={row.id}
-                      className="flex items-center justify-between px-5 py-4"
-                    >
-                      <div>
-                        <p className="font-semibold">{row.name}</p>
-                        <p className="text-sm text-[oklch(0.6_0.016_250)]">
-                          {row.note}
-                        </p>
-                      </div>
-                      <span className="font-mono font-bold text-[oklch(0.82_0.14_75)]">
-                        {formatCentavos(row.price)}
-                      </span>
-                    </li>
-                  ))}
-                  {featuredTiers.length === 0 &&
-                    featuredSections.length === 0 && (
-                      <li className="px-5 py-4 text-sm text-[oklch(0.6_0.016_250)]">
-                        Pricing announced soon.
+                  {featuredTiers
+                    .map((t) => ({
+                      id: t.id,
+                      name: t.name,
+                      price: t.price,
+                      note:
+                        t.capacity - t.reserved - t.sold <= 0
+                          ? "Sold out"
+                          : `${t.capacity - t.reserved - t.sold} left`,
+                    }))
+                    .map((row) => (
+                      <li
+                        key={row.id}
+                        className="flex items-center justify-between px-5 py-4"
+                      >
+                        <div>
+                          <p className="font-semibold">{row.name}</p>
+                          <p className="text-sm text-[oklch(0.6_0.016_250)]">
+                            {row.note}
+                          </p>
+                        </div>
+                        <span className="font-mono font-bold text-[oklch(0.82_0.14_75)]">
+                          {formatCentavos(row.price)}
+                        </span>
                       </li>
-                    )}
+                    ))}
+                  {featuredTiers.length === 0 && (
+                    <li className="px-5 py-4 text-sm text-[oklch(0.6_0.016_250)]">
+                      Pricing announced soon.
+                    </li>
+                  )}
                 </ul>
               </div>
             </div>

@@ -27,17 +27,9 @@ export default async function EventDetailPage({
   const event = await caller.event.bySlug({ slug });
   if (!event) notFound();
 
-  const tiers =
-    event.seatingMode === "ga"
-      ? await caller.event.tiersByEvent({ eventId: event.id })
-      : [];
-  const sections =
-    event.seatingMode === "reserved"
-      ? (await caller.seatMap.forEvent({ eventId: event.id })).sections
-      : [];
+  const tiers = await caller.event.tiersByEvent({ eventId: event.id });
 
   const allSoldOut =
-    event.seatingMode === "ga" &&
     tiers.length > 0 &&
     tiers.every((t) => t.capacity - t.reserved - t.sold <= 0);
 
@@ -106,63 +98,42 @@ export default async function EventDetailPage({
           {/* pricing */}
           <div className="mt-10">
             <h2 className="text-sm font-semibold tracking-widest text-[oklch(0.68_0.018_250)] uppercase">
-              {event.seatingMode === "ga" ? "Ticket tiers" : "Sections"}
+              Ticket types
             </h2>
             <ul className="mt-4 divide-y divide-[oklch(0.3_0.018_250)]/60 rounded-xl border border-[oklch(0.3_0.018_250)]">
-              {event.seatingMode === "ga" &&
-                tiers.map((t) => {
-                  const remaining = t.capacity - t.reserved - t.sold;
-                  const soldOut = remaining <= 0;
-                  return (
-                    <li
-                      key={t.id}
-                      className="flex items-center justify-between px-5 py-4"
-                    >
-                      <div className="flex items-center gap-3">
-                        {t.imageUrl && (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={t.imageUrl}
-                            alt={t.name}
-                            className="size-12 shrink-0 rounded-lg border border-[oklch(0.3_0.018_250)] object-cover"
-                          />
-                        )}
-                        <div>
-                          <p className="font-semibold">{t.name}</p>
-                          <p
-                            className={`text-sm ${soldOut ? "text-[oklch(0.72_0.19_25)]" : "text-[oklch(0.6_0.016_250)]"}`}
-                          >
-                            {soldOut ? "Sold out" : `${remaining} left`}
-                          </p>
-                        </div>
-                      </div>
-                      <span className="font-mono font-bold text-[oklch(0.82_0.14_75)]">
-                        {formatCentavos(t.price)}
-                      </span>
-                    </li>
-                  );
-                })}
-              {event.seatingMode === "reserved" &&
-                sections.map((s) => (
+              {tiers.map((t) => {
+                const remaining = t.capacity - t.reserved - t.sold;
+                const soldOut = remaining <= 0;
+                return (
                   <li
-                    key={s.id}
+                    key={t.id}
                     className="flex items-center justify-between px-5 py-4"
                   >
                     <div className="flex items-center gap-3">
-                      {s.color && (
-                        <span
-                          className="size-3 rounded-full"
-                          style={{ backgroundColor: s.color }}
+                      {t.imageUrl && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={t.imageUrl}
+                          alt={t.name}
+                          className="size-12 shrink-0 rounded-lg border border-[oklch(0.3_0.018_250)] object-cover"
                         />
                       )}
-                      <p className="font-semibold">{s.name}</p>
+                      <div>
+                        <p className="font-semibold">{t.name}</p>
+                        <p
+                          className={`text-sm ${soldOut ? "text-[oklch(0.72_0.19_25)]" : "text-[oklch(0.6_0.016_250)]"}`}
+                        >
+                          {soldOut ? "Sold out" : `${remaining} left`}
+                        </p>
+                      </div>
                     </div>
                     <span className="font-mono font-bold text-[oklch(0.82_0.14_75)]">
-                      {formatCentavos(s.price)}
+                      {formatCentavos(t.price)}
                     </span>
                   </li>
-                ))}
-              {tiers.length === 0 && sections.length === 0 && (
+                );
+              })}
+              {tiers.length === 0 && (
                 <li className="px-5 py-4 text-sm text-[oklch(0.6_0.016_250)]">
                   Pricing announced soon.
                 </li>
@@ -180,7 +151,7 @@ export default async function EventDetailPage({
                 href={`/checkout/${event.slug}`}
                 className="inline-flex items-center justify-center rounded-full bg-[oklch(0.62_0.21_250)] px-8 py-3.5 text-sm font-bold tracking-wide text-white transition-colors hover:bg-[oklch(0.68_0.2_250)]"
               >
-                {event.seatingMode === "ga" ? "Buy tickets" : "Pick seats"}
+                Buy tickets
               </Link>
             )}
             <p className="mt-3 text-xs text-[oklch(0.6_0.016_250)]">

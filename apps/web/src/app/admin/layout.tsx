@@ -36,15 +36,13 @@ export default async function AdminLayout(props: {
   }
 
   return (
-    <div className="flex min-h-screen">
-      <aside className="bg-card w-60 shrink-0 border-r">
-        <div className="border-b px-6 py-4">
-          <p className="text-sm font-bold tracking-tight">No Pets Allowed</p>
-          <p className="text-muted-foreground text-xs">{me.user.name}</p>
-        </div>
-        <AdminSidebar permissions={me.permissions} />
-      </aside>
-      <main className="min-w-0 flex-1 p-6 lg:p-8">{props.children}</main>
+    <div className="min-h-screen">
+      <AdminSidebar
+        permissions={me.permissions}
+        userName={me.user.name}
+        userEmail={me.user.email}
+      />
+      <main className="min-w-0 p-6 md:ml-60 lg:p-8">{props.children}</main>
     </div>
   );
 }

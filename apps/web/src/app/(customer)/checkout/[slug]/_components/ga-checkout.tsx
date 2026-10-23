@@ -69,7 +69,7 @@ export function GaCheckout({
       toast.error("Pick at least one ticket");
       return;
     }
-    createOrder.mutate({ mode: "ga", eventId, items });
+    createOrder.mutate({ eventId, items });
   };
 
   return (

@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 
 import { getCaller } from "../../../(public)/_lib/caller";
 import { GaCheckout } from "./_components/ga-checkout";
-import { ReservedCheckout } from "./_components/reserved-checkout";
 
 export const metadata: Metadata = { title: "Checkout · No Pets Allowed" };
 
@@ -23,20 +22,12 @@ export default async function CheckoutPage({
         {event.title}
       </h1>
       <p className="mt-2 text-sm text-[oklch(0.68_0.018_250)]">
-        Pick your {event.seatingMode === "ga" ? "tickets" : "seats"}. You’ll
-        have 30 minutes to pay once you reserve — up to {event.maxPerOrder} per
-        order.
+        Pick your tickets. You’ll have 30 minutes to pay once you reserve — up
+        to {event.maxPerOrder} per order.
       </p>
 
       <div className="mt-8">
-        {event.seatingMode === "ga" ? (
-          <GaCheckout eventId={event.id} maxPerOrder={event.maxPerOrder} />
-        ) : (
-          <ReservedCheckout
-            eventId={event.id}
-            maxPerOrder={event.maxPerOrder}
-          />
-        )}
+        <GaCheckout eventId={event.id} maxPerOrder={event.maxPerOrder} />
       </div>
     </div>
   );

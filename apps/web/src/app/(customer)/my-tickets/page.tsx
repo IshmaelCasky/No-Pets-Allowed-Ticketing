@@ -31,15 +31,13 @@ export default async function MyTicketsPage() {
     if (!orderByEvent.has(o.eventId)) orderByEvent.set(o.eventId, o.code);
   });
 
-  // Resolve seat labels for reserved tickets.
-  const reservedEventIds = [
-    ...new Set(tickets.filter((t) => t.seatId).map((t) => t.eventId)),
-  ];
-  const seatLabel = new Map<string, string>();
+  // Resolve ticket-type names per ticket (tierId -> name).
+  const ticketEventIds = [...new Set(tickets.map((t) => t.eventId))];
+  const tierName = new Map<string, string>();
   await Promise.all(
-    reservedEventIds.map(async (eventId) => {
-      const map = await caller.seatMap.forEvent({ eventId });
-      map.seats.forEach((s) => seatLabel.set(s.id, s.label));
+    ticketEventIds.map(async (eventId) => {
+      const tiers = await caller.event.tiersByEvent({ eventId });
+      tiers.forEach((t) => tierName.set(t.id, t.name));
     }),
   );
 
@@ -93,9 +91,7 @@ export default async function MyTicketsPage() {
                               "Concert"}
                           </p>
                           <p className="text-sm text-[oklch(0.68_0.018_250)]">
-                            {t.seatId
-                              ? (seatLabel.get(t.seatId) ?? "Reserved seat")
-                              : "General admission"}
+                            {(t.tierId && tierName.get(t.tierId)) ?? "Ticket"}
                           </p>
                           {t.holderName && (
                             <p className="text-xs text-[oklch(0.6_0.016_250)]">
