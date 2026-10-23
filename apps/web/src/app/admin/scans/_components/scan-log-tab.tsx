@@ -256,7 +256,7 @@ export function ScanLogTab({ events }: { events: ScanEventOption[] }) {
           key={searchKey}
           value={search}
           onChange={(q) => setParams({ logQ: q })}
-          placeholder="Holder, buyer, order, seat"
+          placeholder="Holder, buyer, email, order, seat"
         />
       </FilterField>
       <div className="flex gap-2">
