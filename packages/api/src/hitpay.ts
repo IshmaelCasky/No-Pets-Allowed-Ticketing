@@ -73,7 +73,9 @@ export async function createPaymentRequest(
 
   const body = new URLSearchParams();
   body.set("amount", (args.amount / 100).toFixed(2));
-  body.set("currency", args.currency ?? "PHP");
+  // Currency defaults to PHP (production). Override with HITPAY_CURRENCY — e.g.
+  // SGD to test in the Singapore sandbox, which doesn't support PHP/GCash.
+  body.set("currency", args.currency ?? process.env.HITPAY_CURRENCY ?? "PHP");
   body.set("reference_number", args.referenceNumber);
   body.set("redirect_url", args.redirectUrl);
   if (args.webhook) body.set("webhook", args.webhook);
